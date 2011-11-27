@@ -91,6 +91,7 @@ or
 structures might not transfer correctly. Empty directories may also be
 overlooked in some cases. When in doubt, use "-n" first.
  * Differences between keys/files are assumed _only_ by checking the size.
+ * Python 3.x support has not yet been tested.
  * At this time, the script does not take advantage of boto's "multipart"
 transfer methods. (pull requests welcome!)
 
