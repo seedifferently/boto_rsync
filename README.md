@@ -72,6 +72,11 @@ or
                                 that this is not a sync--even if the file has
                                 been updated on the source it will not be
                                 updated on the destination.
+    --ignore_empty              Ignore empty (0-byte) keys/files/directories.
+                                This will skip the transferring of empty
+                                directories and keys/files whose size is 0.
+                                Warning: S3 sometimes uses empty keys with a "/"
+                                at the end of its name to specify a directory.
     -p/--preserve_acl           Copy the ACL from the source key to the
                                 destination key once it has been transferred
                                 (only applies in S3 to S3 transfer mode).

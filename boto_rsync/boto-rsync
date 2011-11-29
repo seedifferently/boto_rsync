@@ -78,6 +78,11 @@ OPTIONS
                                 that this is not a sync--even if the file has
                                 been updated on the source it will not be
                                 updated on the destination.
+    --ignore_empty              Ignore empty (0-byte) keys/files/directories.
+                                This will skip the transferring of empty
+                                directories and keys/files whose size is 0b.
+                                Warning: S3 sometimes uses empty keys with a "/"
+                                at the end of its name to specify a directory.
     -p/--preserve_acl           Copy the ACL from the source key to the
                                 destination key once it has been transferred
                                 (only applies in S3 to S3 transfer mode).
@@ -161,7 +166,7 @@ def main():
         opts, args = getopt.getopt(
                 sys.argv[1:], 'a:s:d:rg:wpei:nvh',
                 ['access_key', 'secret_key', 'debug', 'reduced', 'grant',
-                 'no_overwrite', 'preserve_acl', 'encrypt_keys',
+                 'no_overwrite', 'ignore_empty', 'preserve_acl', 'encrypt_keys',
                  'delete', 'no_op', 'verbose', 'help']
                 )
     except:
@@ -177,6 +182,7 @@ def main():
     no_op = False
     grant = None
     no_overwrite = False
+    ignore_empty = False
     reduced = False
     preserve = False
     encrypt = False
@@ -199,6 +205,8 @@ def main():
             no_op = True
         if o in ('-w', '--no_overwrite'):
             no_overwrite = True
+        if o in ('--ignore_empty'):
+            ignore_empty = True
         if o in ('-p', '--preserve_acl'):
             preserve = True
         if o in ('-e', '--encrypt_keys'):
@@ -286,7 +294,14 @@ def main():
                         key_name = s3_path + get_key_name(fullpath, path)
                         file_size = os.path.getsize(fullpath)
                         
-                        if key_name in keys:
+                        if file_size == 0:
+                            if ignore_empty:
+                                if not quiet:
+                                    print 'Skipping %s (empty file)' % (
+                                        fullpath[len(path):].lstrip('/')
+                                        )
+                                continue
+                        elif key_name in keys:
                             if no_overwrite:
                                 if not quiet:
                                     print 'Skipping %s (not overwriting)' % (
@@ -322,7 +337,11 @@ def main():
                 elif root != path:
                     key_name = s3_path + get_key_name(root, path) + '/'
                     
-                    if key_name in keys:
+                    if ignore_empty:
+                        if not quiet:
+                            print 'Skipping %s (empty file)' % key_name
+                        continue
+                    elif key_name in keys:
                         if no_overwrite:
                             if not quiet:
                                 print 'Skipping %s (not overwriting)' % key_name
@@ -383,7 +402,14 @@ def main():
             copy_file = True
             key = b.get_key(key_name)
             
-            if key:
+            if file_size == 0:
+                if ignore_empty:
+                    if not quiet:
+                        print 'Skipping %s -> %s (empty file)' % (
+                            filename, key_name.split('/')[-1]
+                            )
+                    copy_file = False
+            elif key:
                 if no_overwrite:
                     copy_file = False
                     if not quiet:
@@ -438,7 +464,19 @@ def main():
             else:
                 fullpath = os.path.join(path, keypath)
             
-            if not os.path.isdir(os.path.split(fullpath)[0]):
+            if key.size == 0:
+                if ignore_empty:
+                    if not quiet:
+                        if rename:
+                            print 'Skipping %s -> %s (empty key)' % (
+                                keypath, fullpath.split(os.sep)[-1]
+                                )
+                        else:
+                            print 'Skipping %s (empty key)' % (
+                                fullpath.split(os.sep)[-1]
+                                )
+                    copy_file = False
+            elif not os.path.isdir(os.path.split(fullpath)[0]):
                 if not quiet:
                     print 'Creating new directory: %s' % (
                         os.path.split(fullpath)[0]
@@ -499,7 +537,14 @@ def main():
                 fullpath = os.path.join(path, keypath.replace('/', os.sep))
                 keys.append(fullpath)
                 
-                if not os.path.isdir(os.path.split(fullpath)[0]):
+                if key.size == 0:
+                    if ignore_empty:
+                        if not quiet:
+                            print 'Skipping %s (empty key)' % (
+                                fullpath[len(path)+1:]
+                                )
+                        continue
+                elif not os.path.isdir(os.path.split(fullpath)[0]):
                     if not quiet:
                         print 'Creating new directory: %s' % (
                             os.path.split(fullpath)[0]
@@ -574,7 +619,17 @@ def main():
             
             dest_key = b2.get_key(fullpath)
             
-            if dest_key:
+            if key.size == 0:
+                if ignore_empty:
+                    if not quiet:
+                        if rename:
+                            print 'Skipping %s -> %s (empty key)' % (
+                                keypath.split('/')[-1], fullpath.split('/')[-1]
+                                )
+                        else:
+                            print 'Skipping %s (empty key)' % fullpath
+                    copy_file = False
+            elif dest_key:
                 # TODO: Check for differing ACL
                 if no_overwrite:
                     if not quiet:
@@ -650,7 +705,12 @@ def main():
                 keys.append(fullpath)
                 dest_key = b2.get_key(fullpath)
                 
-                if dest_key:
+                if key.size == 0:
+                    if ignore_empty:
+                        if not quiet:
+                            print 'Skipping %s (empty key)' % fullpath
+                        continue
+                elif dest_key:
                     # TODO: Check for differing ACL
                     if no_overwrite:
                         if not quiet:
