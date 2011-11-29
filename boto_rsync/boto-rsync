@@ -36,10 +36,10 @@ SYNOPSIS
     reengineered to more closely mimic rsync. Its goal is to provide a familiar
     rsync-like wrapper for boto.
 
-    By default, differences between files are checked by comparing file sizes
-    (e.g. rsync's --size-only option). If the file exists on the destination,
-    but its size differs from the source, then it will be overwritten (unless
-    the -w option is used).
+    By default, the script works recursively and differences between files are
+    checked by comparing file sizes (e.g. rsync's --recursive and --size-only
+    options). If the file exists on the destination but its size differs from
+    the source, then it will be overwritten (unless the -w option is used).
 
 USAGE
     boto-rsync [OPTIONS] SOURCE DESTINATION
@@ -80,7 +80,7 @@ OPTIONS
                                 updated on the destination.
     --ignore_empty              Ignore empty (0-byte) keys/files/directories.
                                 This will skip the transferring of empty
-                                directories and keys/files whose size is 0b.
+                                directories and keys/files whose size is 0.
                                 Warning: S3 sometimes uses empty keys with a "/"
                                 at the end of its name to specify a directory.
     -p/--preserve_acl           Copy the ACL from the source key to the

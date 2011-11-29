@@ -9,10 +9,10 @@ boto-rsync is a rough adaptation of boto's s3put script which has been
 reengineered to more closely mimic rsync. Its goal is to provide a familiar
 rsync-like wrapper for boto.
 
-By default, differences between files are checked by comparing file sizes
-(e.g. rsync's --size-only option). If the file exists on the destination,
-but its size differs from the source, then it will be overwritten (unless
-the -w option is used).
+By default, the script works recursively and differences between files are
+checked by comparing file sizes (e.g. rsync's --recursive and --size-only
+options). If the file exists on the destination but its size differs from
+the source, then it will be overwritten (unless the -w option is used).
 
 ## Installation ##
 
