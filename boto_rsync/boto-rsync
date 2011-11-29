@@ -126,7 +126,7 @@ def convert_bytes(n):
     elif n >= K:
         return '%.1fK' % (float(n) / K)
     else:
-        return '%d' % n
+        return '%dB' % n
 
 def submit_cb(bytes_so_far, total_bytes):
     """The "progress" callback for file transfers."""
