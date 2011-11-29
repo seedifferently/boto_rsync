@@ -309,7 +309,7 @@ def main():
                                         )
                                 continue
                             elif keys[key_name] == file_size or \
-                                 keys[key_name] == 0 and key_name.endswith('/'):
+                                 key_name.endswith('/'):
                                 if not quiet:
                                     print 'Skipping %s (size matches)' % (
                                         fullpath[len(path):].lstrip('/')
@@ -346,7 +346,7 @@ def main():
                             if not quiet:
                                 print 'Skipping %s (not overwriting)' % key_name
                             continue
-                        elif keys[key_name] == 0 and key_name.endswith('/'):
+                        elif key_name.endswith('/'):
                             if not quiet:
                                 print 'Skipping %s (size matches)' % key_name
                             continue
@@ -454,7 +454,7 @@ def main():
         
         s3_path_key = b.get_key(s3_path)
         
-        if s3_path_key and s3_path_key.size > 0:
+        if s3_path_key and not s3_path_key.name.endswith('/'):
             # Single file download
             key = s3_path_key
             keypath = key.name.split('/')[-1]
@@ -496,7 +496,7 @@ def main():
                                 )
                     copy_file = False
                 elif key.size == os.path.getsize(fullpath) or \
-                     key.size == 0 and key.name.endswith('/'):
+                     key.name.endswith('/'):
                     if not quiet:
                         if rename:
                             print 'Skipping %s -> %s (size matches)' % (
@@ -525,7 +525,7 @@ def main():
                     # Clean stdout
                     print ''
         
-        elif not s3_path_key or s3_path_key and s3_path_key.size == 0:
+        else:
             # Possible multi file download
             if not s3_path_key and s3_path and not s3_path.endswith('/'):
                 s3_path += '/'
@@ -559,7 +559,7 @@ def main():
                                 )
                         continue
                     elif key.size == os.path.getsize(fullpath) or \
-                         key.size == 0 and key.name.endswith('/'):
+                         key.name.endswith('/'):
                         if not quiet:
                             print 'Skipping %s (size matches)' % (
                                 fullpath[len(path)+1:]
@@ -571,7 +571,7 @@ def main():
                 if not no_op:
                     if key.name.endswith('/'):
                         # Looks like a directory, so just print the status
-                        submit_cb(key.size, key.size)
+                        submit_cb(0, 0)
                     else:
                         # Setup callback
                         num_cb = int(key.size ** .25)
@@ -606,7 +606,7 @@ def main():
         
         s3_path_key = b.get_key(s3_path)
         
-        if s3_path_key and s3_path_key.size > 0:
+        if s3_path_key and not s3_path_key.name.endswith('/'):
             # Single file sync
             key = s3_path_key
             keypath = key.name.split('/')[-1]
@@ -685,7 +685,7 @@ def main():
                 # Clean stdout
                 print ''
         
-        elif not s3_path_key or s3_path_key and s3_path_key.size == 0:
+        else:
             # Possible multi file sync
             if not s3_path_key and s3_path and not s3_path.endswith('/'):
                 s3_path += '/'
