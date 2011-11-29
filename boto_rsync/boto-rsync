@@ -373,13 +373,13 @@ def main():
                     del(keys[s3_path])
                 
                 for root, dirs, files in os.walk(path):
-                    if files:
-                        for file in files:
-                            fullpath = os.path.join(root, file)
-                            key_name = s3_path + get_key_name(fullpath, path)
-                            if key_name in keys:
-                                del(keys[key_name])
-                    elif root != path:
+                    for file in files:
+                        fullpath = os.path.join(root, file)
+                        key_name = s3_path + get_key_name(fullpath, path)
+                        if key_name in keys:
+                            del(keys[key_name])
+                    
+                    if root != path:
                         key_name = s3_path + get_key_name(root, path) + '/'
                         if key_name in keys:
                             del(keys[key_name])
