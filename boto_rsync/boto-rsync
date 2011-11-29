@@ -339,7 +339,7 @@ def main():
                     
                     if ignore_empty:
                         if not quiet:
-                            print 'Skipping %s (empty file)' % key_name
+                            print 'Skipping %s (empty directory)' % key_name
                         continue
                     elif key_name in keys:
                         if no_overwrite:
