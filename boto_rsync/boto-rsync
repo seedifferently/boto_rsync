@@ -129,6 +129,7 @@ def convert_bytes(n):
         return '%dB' % n
 
 def spinner(event, every):
+    """Animates an ASCII spinner."""
     while True:
         if event.isSet():
             sys.stdout.write('\b \b')
@@ -179,6 +180,7 @@ def get_key_name(fullpath, prefix):
     return key_name.lstrip('/')
 
 def signal_handler(signum, frame):
+    """Handles signals."""
     global ev
     
     if signum == signal.SIGINT:
@@ -725,8 +727,8 @@ def main():
                     try:
                         # Transfer the key
                         key.copy(s3_dest_bucket, fullpath,
-                                 reduced_redundancy=reduced, preserve_acl=preserve,
-                                 encrypt_key=encrypt)
+                                 reduced_redundancy=reduced,
+                                 preserve_acl=preserve, encrypt_key=encrypt)
                     except Exception, e:
                         raise e
                     finally:
@@ -806,8 +808,8 @@ def main():
                     # Transfer the key
                     try:
                         key.copy(s3_dest_bucket, fullpath,
-                                 reduced_redundancy=reduced, preserve_acl=preserve,
-                                 encrypt_key=encrypt)
+                                 reduced_redundancy=reduced,
+                                 preserve_acl=preserve, encrypt_key=encrypt)
                     except Exception, e:
                         raise e
                     finally:
