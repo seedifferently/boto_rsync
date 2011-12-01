@@ -347,7 +347,8 @@ def main():
                                         fullpath[len(path):].lstrip('/')
                                         )
                                 continue
-                        elif key_name in keys:
+                        
+                        if key_name in keys:
                             if no_overwrite:
                                 if not quiet:
                                     print 'Skipping %s (not overwriting)' % (
@@ -455,7 +456,8 @@ def main():
                             filename, key_name.split('/')[-1]
                             )
                     copy_file = False
-            elif key:
+            
+            if key:
                 if no_overwrite:
                     copy_file = False
                     if not quiet:
@@ -522,7 +524,8 @@ def main():
                                 fullpath.split(os.sep)[-1]
                                 )
                     copy_file = False
-            elif not os.path.isdir(os.path.split(fullpath)[0]):
+            
+            if not os.path.isdir(os.path.split(fullpath)[0]):
                 if not quiet:
                     print 'Creating new directory: %s' % (
                         os.path.split(fullpath)[0]
@@ -592,7 +595,8 @@ def main():
                                 fullpath[len(path)+1:]
                                 )
                         continue
-                elif not os.path.isdir(os.path.split(fullpath)[0]):
+                
+                if not os.path.isdir(os.path.split(fullpath)[0]):
                     if not quiet:
                         print 'Creating new directory: %s' % (
                             os.path.split(fullpath)[0]
@@ -677,7 +681,8 @@ def main():
                         else:
                             print 'Skipping %s (empty key)' % fullpath
                     copy_file = False
-            elif dest_key:
+            
+            if dest_key:
                 # TODO: Check for differing ACL
                 if no_overwrite:
                     if not quiet:
@@ -773,7 +778,8 @@ def main():
                         if not quiet:
                             print 'Skipping %s (empty key)' % fullpath
                         continue
-                elif dest_key:
+                
+                if dest_key:
                     # TODO: Check for differing ACL
                     if no_overwrite:
                         if not quiet:
