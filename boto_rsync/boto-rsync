@@ -186,13 +186,12 @@ def signal_handler(signum, frame):
     if signum == signal.SIGINT:
         if ev:
             ev.set()
-            print ''
+        
+        print ''
         sys.exit(0)
 
 def main():
     global timestamp, ev
-    
-    signal.signal(signal.SIGINT, signal_handler)
     
     try:
         opts, args = getopt.getopt(
@@ -203,6 +202,9 @@ def main():
                 )
     except:
         usage()
+    
+    signal.signal(signal.SIGINT, signal_handler)
+    ev = None
     aws_access_key_id = None
     aws_secret_access_key = None
     total = 0
