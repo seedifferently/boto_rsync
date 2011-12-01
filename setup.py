@@ -22,6 +22,7 @@ setup(
     author='Seth Davis',
     author_email='seth@curiasolutions.com',
     url='http://github.com/seedifferently/boto_rsync',
+    keywords='boto amazon aws s3 cloud sync rsync',
     packages=['boto_rsync'],
     install_requires=['boto>=2.0'],
     scripts=[
