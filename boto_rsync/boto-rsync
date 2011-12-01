@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 #
-import sys, os, time, getopt
+import sys, os, time, getopt, threading, signal
 import boto
 
 __version__ = '0.2'
@@ -128,6 +128,25 @@ def convert_bytes(n):
     else:
         return '%dB' % n
 
+def spinner(event, every):
+    while True:
+        if event.isSet():
+            sys.stdout.write('\b \b')
+            sys.stdout.flush()
+            break
+        sys.stdout.write('\b\\')
+        sys.stdout.flush()
+        event.wait(every)
+        sys.stdout.write('\b|')
+        sys.stdout.flush()
+        event.wait(every)
+        sys.stdout.write('\b/')
+        sys.stdout.flush()
+        event.wait(every)
+        sys.stdout.write('\b-')
+        sys.stdout.flush()
+        event.wait(every)
+
 def submit_cb(bytes_so_far, total_bytes):
     """The "progress" callback for file transfers."""
     global timestamp
@@ -159,8 +178,19 @@ def get_key_name(fullpath, prefix):
     key_name = '/'.join(l)
     return key_name.lstrip('/')
 
+def signal_handler(signum, frame):
+    global ev
+    
+    if signum == signal.SIGINT:
+        if ev:
+            ev.set()
+            print ''
+        sys.exit(0)
+
 def main():
-    global timestamp
+    global timestamp, ev
+    
+    signal.signal(signal.SIGINT, signal_handler)
     
     try:
         opts, args = getopt.getopt(
@@ -277,14 +307,30 @@ def main():
         
         if os.path.isdir(path):
             # Possible multi file upload
-            print 'Getting list of existing keys to check against...'
+            sys.stdout.write('Scanning S3 for files to transfer...  ')
+            sys.stdout.flush()
             
             if s3_path and not s3_path.endswith('/'):
                 s3_path += '/'
             
-            keys = {}
-            for key in b.list(prefix=s3_path):
-                keys[key.name] = key.size
+            # Start "spinner" thread
+            ev = threading.Event()
+            t1 = threading.Thread(target=spinner, args=(ev, 0.25))
+            t1.start()
+            
+            try:
+                keys = {}
+                for key in b.list(prefix=s3_path):
+                    keys[key.name] = key.size
+            except Exception, e:
+                raise e
+            finally:
+                # End "spinner" thread
+                ev.set()
+                t1.join()
+                
+                # Clean stdout
+                print ''
             
             # "Walk" the directory and upload files
             for root, dirs, files in os.walk(path):
@@ -532,6 +578,8 @@ def main():
             
             keys = []
             
+            print 'Scanning S3 for keys to transfer...'
+            
             for key in b.list(prefix=s3_path):
                 keypath = key.name[len(s3_path):]
                 fullpath = os.path.join(path, keypath.replace('/', os.sep))
@@ -652,19 +700,32 @@ def main():
             
             if copy_file:
                 if rename:
-                    sys.stdout.write('%s -> %s...' % (
+                    sys.stdout.write('%s -> %s...  ' % (
                         keypath.split('/')[-1], fullpath.split('/')[-1])
                         )
                 else:
-                    sys.stdout.write('%s...' % keypath)
+                    sys.stdout.write('%s...  ' % keypath)
                 sys.stdout.flush()
                 if not no_op:
                     timestamp = time.time()
                     
-                    # Transfer the key
-                    key.copy(s3_dest_bucket, fullpath,
-                             reduced_redundancy=reduced, preserve_acl=preserve,
-                             encrypt_key=encrypt)
+                    # Start "spinner" thread
+                    ev = threading.Event()
+                    t1 = threading.Thread(target=spinner, args=(ev, 0.25))
+                    t1.start()
+                    
+                    try:
+                        # Transfer the key
+                        key.copy(s3_dest_bucket, fullpath,
+                                 reduced_redundancy=reduced, preserve_acl=preserve,
+                                 encrypt_key=encrypt)
+                    except Exception, e:
+                        raise e
+                    finally:
+                        # End "spinner" thread
+                        ev.set()
+                        t1.join()
+                    
                     if rename:
                         sys.stdout.write('\r%s -> %s    \n' % (
                             keypath.split('/')[-1], fullpath.split('/')[-1]
@@ -694,6 +755,8 @@ def main():
             
             keys = []
             
+            print 'Scanning S3 for keys to transfer...'
+            
             for key in b.list(prefix=s3_path):
                 if key.name == s3_path:
                     keypath = key.name.split('/')[-2] + '/'
@@ -721,15 +784,28 @@ def main():
                             print 'Skipping %s (size matches)' % fullpath
                         continue
                 
-                sys.stdout.write('%s...' % keypath)
+                sys.stdout.write('%s...  ' % keypath)
                 sys.stdout.flush()
                 if not no_op:
                     timestamp = time.time()
                     
+                    # Start "spinner" thread
+                    ev = threading.Event()
+                    t1 = threading.Thread(target=spinner, args=(ev, 0.25))
+                    t1.start()
+                    
                     # Transfer the key
-                    key.copy(s3_dest_bucket, fullpath,
-                             reduced_redundancy=reduced, preserve_acl=preserve,
-                             encrypt_key=encrypt)
+                    try:
+                        key.copy(s3_dest_bucket, fullpath,
+                                 reduced_redundancy=reduced, preserve_acl=preserve,
+                                 encrypt_key=encrypt)
+                    except Exception, e:
+                        raise e
+                    finally:
+                        # End "spinner" thread
+                        ev.set()
+                        t1.join()
+                    
                     sys.stdout.write('\r%s    \n' % keypath)
                     sys.stdout.flush()
                     submit_cb(key.size, key.size)
