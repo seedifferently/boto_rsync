@@ -502,7 +502,10 @@ def main():
     elif xfer_type == 'download':
         # Perform S3 "download"
         
-        s3_path_key = b.get_key(s3_path)
+        if s3_path:
+            s3_path_key = b.get_key(s3_path)
+        else:
+            s3_path_key = None
         
         if s3_path_key and not s3_path_key.name.endswith('/'):
             # Single file download
@@ -594,7 +597,7 @@ def main():
                     if ignore_empty:
                         if not quiet:
                             print 'Skipping %s (empty key)' % (
-                                fullpath[len(path)+1:]
+                                fullpath[len(os.path.join(path, '')):]
                                 )
                         continue
                 
@@ -609,14 +612,14 @@ def main():
                     if no_overwrite:
                         if not quiet:
                             print 'Skipping %s (not overwriting)' % (
-                                fullpath[len(path)+1:]
+                                fullpath[len(os.path.join(path, '')):]
                                 )
                         continue
                     elif key.size == os.path.getsize(fullpath) or \
                          key.name.endswith('/'):
                         if not quiet:
                             print 'Skipping %s (size matches)' % (
-                                fullpath[len(path)+1:]
+                                fullpath[len(os.path.join(path, '')):]
                                 )
                         continue
                 
@@ -644,14 +647,18 @@ def main():
                         for file in files:
                             filepath = os.path.join(root, file)
                             if filepath not in keys:
-                                print 'deleting %s' % filepath[len(path)+1:]
+                                print 'deleting %s' % (
+                                  filepath[len(os.path.join(path, '')):]
+                                  )
                                 if not no_op:
                                     # Delete the file
                                     os.remove(filepath)
                     elif root != path:
                         dirpath = os.path.join(root, '')
                         if dirpath not in keys:
-                            print 'deleting %s' % dirpath[len(path)+1:]
+                            print 'deleting %s' % (
+                              dirpath[len(os.path.join(path, '')):]
+                              )
                             if not no_op:
                                 # Remove the directory
                                 os.rmdir(dirpath)
