@@ -1,10 +1,15 @@
 # Changelog #
 
+## v0.3.1 -- 11/30/2011 ##
+
+ * Fixed a bug where the beginning of file/key names were sometimes stripped.
+ * Fixed a bug where directory downloads sometimes crashed.
+
 ## v0.3 -- 11/30/2011 ##
 
- * Adding an ASCII spinner to help the user understand that the process hasn't
+ * Added an ASCII spinner to help the user understand that the process hasn't
 hung.
- * Fixing bugs from the --ignore_empty and directory features that were added in
+ * Fixed bugs from the --ignore_empty and directory features that were added in
 v0.2.
 
 ## v0.2 -- 11/29/2011 ##
