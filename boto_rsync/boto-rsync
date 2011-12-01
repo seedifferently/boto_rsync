@@ -604,7 +604,10 @@ def main():
     else:
         # Perform S3 to S3 "sync"
         
-        s3_path_key = b.get_key(s3_path)
+        if s3_path:
+            s3_path_key = b.get_key(s3_path)
+        else:
+            s3_path_key = None
         
         if s3_path_key and not s3_path_key.name.endswith('/'):
             # Single file sync
