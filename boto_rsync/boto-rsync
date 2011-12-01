@@ -24,10 +24,10 @@
 import sys, os, time, getopt, threading, signal
 import boto
 
-__version__ = '0.2'
+__version__ = '0.3'
 
 usage_string = """
-boto-rsync v0.2
+boto-rsync v0.3
 Copyright (c) 2011 Seth Davis
 http://github.com/seedifferently/boto_rsync
 

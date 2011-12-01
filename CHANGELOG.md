@@ -1,10 +1,17 @@
 # Changelog #
 
+## v0.3 -- 11/30/2011 ##
+
+ * Adding an ASCII spinner to help the user understand that the process hasn't
+hung.
+ * Fixing bugs from the --ignore_empty and directory features that were added in
+v0.2.
+
 ## v0.2 -- 11/29/2011 ##
 
- * Adding the --ignore_empty option
- * Always assume that a key ending in "/" is an S3 "directory"
+ * Added the --ignore_empty option.
+ * Always assume that a key name ending in "/" is an S3 "directory."
 
 ## v0.1 -- 11/27/2011 ##
 
- * Initial release
+ * Initial release.
