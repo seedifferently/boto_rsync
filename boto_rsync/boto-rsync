@@ -150,21 +150,33 @@ def spinner(event, every):
 
 def submit_cb(bytes_so_far, total_bytes):
     """The "progress" callback for file transfers."""
-    global timestamp
+    global speeds
     
-    # Mark the timestamp of the beginning call
+    # Setup speed calculation
     if bytes_so_far < 1:
-        timestamp = time.time()
+        speeds = []
+    speeds.append((bytes_so_far, time.time()))
     
+    # Try to get ~5 seconds of data info for speed calculation
+    s1, t1 = speeds[-1]
+    for speed in reversed(speeds):
+        s2, t2 = speed
+        
+        if (t1 - t2) > 5:
+            break
+    
+    # Calculate the speed
+    seconds = t1 - t2
+    if seconds < 1:
+        seconds = 1
+    size = s1 - s2
+    speed = 1.0 * size / seconds
+    
+    # Calculate the progress
     try:
         progress = round((1.0 * bytes_so_far / total_bytes) * 100)
     except ZeroDivisionError:
         progress = 100
-    
-    try:
-        speed = 1.0 * bytes_so_far / (time.time() - timestamp)
-    except ZeroDivisionError:
-        speed = 0
     
     sys.stdout.write('    %6s of %s   %3d%%    %4s/s    \r' % (
       convert_bytes(bytes_so_far), convert_bytes(total_bytes), progress,
@@ -187,10 +199,11 @@ def signal_handler(signum, frame):
         if ev:
             ev.set()
             print ''
+        
         sys.exit(0)
 
 def main():
-    global timestamp, ev
+    global speeds, ev
     
     signal.signal(signal.SIGINT, signal_handler)
     
@@ -207,7 +220,7 @@ def main():
     aws_secret_access_key = None
     total = 0
     debug = 0
-    timestamp = time.time()
+    speeds = []
     cb = submit_cb
     num_cb = 10
     quiet = True
@@ -724,7 +737,7 @@ def main():
                     sys.stdout.write('%s...  ' % keypath)
                 sys.stdout.flush()
                 if not no_op:
-                    timestamp = time.time()
+                    speeds.append((0, time.time()))
                     
                     # Start "spinner" thread
                     ev = threading.Event()
@@ -805,7 +818,7 @@ def main():
                 sys.stdout.write('%s...  ' % keypath)
                 sys.stdout.flush()
                 if not no_op:
-                    timestamp = time.time()
+                    speeds.append((0, time.time()))
                     
                     # Start "spinner" thread
                     ev = threading.Event()
