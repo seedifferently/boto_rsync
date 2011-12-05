@@ -178,7 +178,7 @@ def submit_cb(bytes_so_far, total_bytes):
     except ZeroDivisionError:
         progress = 100
     
-    sys.stdout.write('    %6s of %s   %3d%%    %4s/s    \r' % (
+    sys.stdout.write('    %6s of %6s    %3d%%    %6s/s    \r' % (
       convert_bytes(bytes_so_far), convert_bytes(total_bytes), progress,
       convert_bytes(speed))
       )
