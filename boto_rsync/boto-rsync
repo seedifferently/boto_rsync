@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 #
-import sys, os, time, getopt, threading, signal
+import sys, os, time, datetime, getopt, threading, signal
 import boto
 
 __version__ = '0.3.1'
@@ -155,6 +155,11 @@ def submit_cb(bytes_so_far, total_bytes):
     # Setup speed calculation
     if bytes_so_far < 1:
         speeds = []
+        speeds.append((bytes_so_far, time.time()))
+    # Skip processing if our last process was less than 850ms ago
+    elif bytes_so_far != total_bytes and (time.time() - speeds[-1][1]) < .85:
+        return
+    
     speeds.append((bytes_so_far, time.time()))
     
     # Try to get ~5 seconds of data info for speed calculation
@@ -166,11 +171,31 @@ def submit_cb(bytes_so_far, total_bytes):
             break
     
     # Calculate the speed
-    seconds = t1 - t2
-    if seconds < 1:
-        seconds = 1
-    size = s1 - s2
-    speed = 1.0 * size / seconds
+    if bytes_so_far == total_bytes:
+        # Calculate the overall average speed
+        seconds = int(round(speeds[-1][1] - speeds[0][1]))
+        if seconds < 1:
+            seconds = 1
+        speed = 1.0 * total_bytes / seconds
+    else:
+        # Calculate the current average speed
+        seconds = t1 - t2
+        if seconds < 1:
+            seconds = 1
+        size = s1 - s2
+        speed = 1.0 * size / seconds
+    
+    # Calculate the duration
+    try:
+        if bytes_so_far == total_bytes:
+            # Calculate time taken
+            duration = int(round(speeds[-1][1] - speeds[0][1]))
+        else:
+            # Calculate remaining time
+            duration = int(round((total_bytes - bytes_so_far) / speed))
+        duration = str(datetime.timedelta(seconds=duration))
+    except ZeroDivisionError:
+        duration = '0:00:00'
     
     # Calculate the progress
     try:
@@ -178,9 +203,9 @@ def submit_cb(bytes_so_far, total_bytes):
     except ZeroDivisionError:
         progress = 100
     
-    sys.stdout.write('    %6s of %6s    %3d%%    %6s/s    \r' % (
+    sys.stdout.write('    %6s of %6s    %3d%%    %6s/s    %7s    \r' % (
       convert_bytes(bytes_so_far), convert_bytes(total_bytes), progress,
-      convert_bytes(speed))
+      convert_bytes(speed), duration)
       )
     sys.stdout.flush()
 
