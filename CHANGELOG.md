@@ -1,5 +1,11 @@
 # Changelog #
 
+## v0.4 -- 12/04/2011 ##
+
+ * Refactored the callback to be more accurate (hopefully).
+ * Added estimated time remaining / transfer duration to callback.
+ * Fixed a bug where SIGINT might not exit properly.
+
 ## v0.3.1 -- 11/30/2011 ##
 
  * Fixed a bug where the beginning of file/key names were sometimes stripped.

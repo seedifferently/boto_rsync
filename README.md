@@ -1,4 +1,4 @@
-# boto rsync v0.3.1 #
+# boto rsync v0.4 #
 
 Copyright (c) 2011 Seth Davis    
 http://github.com/seedifferently/boto_rsync
