@@ -18,9 +18,9 @@
 ## v0.3 -- 11/30/2011 ##
 
  * Added an ASCII spinner to help the user understand that the process hasn't
-hung.
+   hung.
  * Fixed bugs from the --ignore_empty and directory features that were added in
-v0.2.
+   v0.2.
 
 ## v0.2 -- 11/29/2011 ##
 

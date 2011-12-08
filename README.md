@@ -26,7 +26,7 @@ or
 
  * You'll need to have Python 2.5+ and either pip or setuptools installed.
  * pip/easy_install should automatically install boto for you, but the advanced
-user can find it here: http://github.com/boto/boto/
+   user can find it here: http://github.com/boto/boto/
 
 ## Usage ##
 
@@ -97,15 +97,15 @@ or
 ## Known Issues and Limitations ##
 
  * Due to the nature of how directories work in S3/GS, some non-standard folder
-structures might not transfer correctly. Empty directories may also be
-overlooked in some cases. When in doubt, use "-n" first.
+   structures might not transfer correctly. Empty directories may also be
+   overlooked in some cases. When in doubt, use "-n" first.
  * Differences between keys/files are assumed _only_ by checking the size.
  * Python 3.x support has not yet been tested.
  * At this time, the script does not take advantage of boto's "multipart"
-transfer methods. (pull requests welcome!)
+   transfer methods. (pull requests welcome!)
  * As of this writing, the release version of boto (2.1.1) seems to be buggy
-when attempting to perform GS to GS transfers. Use the latest boto github source
-if you need this functionality.
+   when attempting to perform GS to GS transfers. Use the latest boto github
+   source if you need this functionality.
 
 ## Disclaimers and Warnings ##
 
