@@ -1,6 +1,6 @@
 # Changelog #
 
-## v0.5 -- ??/??/2011 ##
+## v0.5 -- 12/08/2011 ##
 
  * Added initial support for Google Storage.
 
