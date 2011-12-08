@@ -103,6 +103,9 @@ overlooked in some cases. When in doubt, use "-n" first.
  * Python 3.x support has not yet been tested.
  * At this time, the script does not take advantage of boto's "multipart"
 transfer methods. (pull requests welcome!)
+ * As of this writing, the release version of boto (2.1.1) seems to be buggy
+when attempting to perform GS to GS transfers. Use the latest boto github source
+if you need this functionality.
 
 ## Disclaimers and Warnings ##
 
