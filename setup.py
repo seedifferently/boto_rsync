@@ -1,13 +1,10 @@
-import sys, os
+import sys
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
 
 from boto_rsync import __version__
-
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 if sys.version_info <= (2, 4):
     error = "ERROR: Package requires Python Version 2.5 or above...exiting."
@@ -19,7 +16,11 @@ setup(
     version=__version__,
     description="An rsync-like wrapper for boto's S3 and Google Storage " + \
                 "interfaces.",
-    long_description=read('README.md'),
+    long_description="boto-rsync is a rough adaptation of boto's s3put " + \
+                     "script which has been reengineered to more closely " + \
+                     "mimic rsync. Its goal is to provide a familiar " + \
+                     "rsync-like wrapper for boto's S3 and Google Storage " +\
+                     "interfaces.",
     author='Seth Davis',
     author_email='seth@curiasolutions.com',
     url='http://github.com/seedifferently/boto_rsync',
