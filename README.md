@@ -7,7 +7,7 @@ http://github.com/seedifferently/boto_rsync
 
 boto-rsync is a rough adaptation of boto's s3put script which has been
 reengineered to more closely mimic rsync. Its goal is to provide a familiar
-rsync-like wrapper for boto.
+rsync-like wrapper for boto's S3 and Google Storage interfaces.
 
 By default, the script works recursively and differences between files are
 checked by comparing file sizes (e.g. rsync's --recursive and --size-only
@@ -33,8 +33,9 @@ user can find it here: http://github.com/boto/boto/
     boto-rsync [OPTIONS] SOURCE DESTINATION
 
 SOURCE and DESTINATION can either be a local path to a directory or specific
-file, a custom S3 URI to a directory or specific key in the format of
-s3://bucketname/path/or/key, or a S3 to S3 transfer using two S3 URIs.
+file, a custom S3 or GS URI to a directory or specific key in the format of
+s3://bucketname/path/or/key, a S3 to S3 transfer using two S3 URIs, or
+a GS to GS transfer using two GS URIs.
 
 ## Examples ##
 
@@ -42,7 +43,7 @@ s3://bucketname/path/or/key, or a S3 to S3 transfer using two S3 URIs.
 
 or
 
-    boto-rsync [OPTIONS] s3://bucketname/remote/path/or/key /local/path/
+    boto-rsync [OPTIONS] gs://bucketname/remote/path/or/key /local/path/
 
 or
 
@@ -50,23 +51,25 @@ or
 
 ## Options ##
 
-    -a/--access_key <key>       Your AWS Access Key ID. If not supplied, boto
+    -a/--access_key <key>       Your Access Key ID. If not supplied, boto will
+                                use the value of the environment variable
+                                AWS_ACCESS_KEY_ID (for S3) or GS_ACCESS_KEY_ID
+                                (for GS).
+    -s/--secret_key <secret>    Your Secret Access Key. If not supplied, boto
                                 will use the value of the environment variable
-                                AWS_ACCESS_KEY_ID
-    -s/--secret_key <secret>    Your AWS Secret Access Key. If not supplied,
-                                boto will use the value of the environment
-                                variable AWS_SECRET_ACCESS_KEY
+                                AWS_ACCESS_KEY_ID (for S3) or GS_ACCESS_KEY_ID
+                                (for GS).
     -d/--debug <debug_level>    0 means no debug output (default), 1 means
                                 normal debug output from boto, and 2 means boto
                                 debug output plus request/response output from
-                                httplib
-    -r/--reduced                Enable reduced redundancy on files copied to S3
-                                (only applies when S3 is the destination).
+                                httplib.
+    -r/--reduced                Enable reduced redundancy on files copied to S3.
     -g/--grant <policy>         A canned ACL policy that will be granted on each
-                                file transferred to S3. The value of provided
+                                file transferred to S3/GS. The value provided
                                 must be one of the "canned" ACL policies
-                                supported by S3: private, public-read,
-                                public-read-write, or authenticated-read
+                                supported by S3/GS: private, public-read,
+                                public-read-write (S3 only), or
+                                authenticated-read
     -w/--no_overwrite           No files will be overwritten, if the file/key
                                 exists on the destination it will be kept. Note
                                 that this is not a sync--even if the file has
@@ -75,11 +78,12 @@ or
     --ignore_empty              Ignore empty (0-byte) keys/files/directories.
                                 This will skip the transferring of empty
                                 directories and keys/files whose size is 0.
-                                Warning: S3 sometimes uses empty keys with a "/"
-                                at the end of its name to specify a directory.
+                                Warning: S3/GS often uses empty keys with
+                                special trailing characters to specify
+                                directories.
     -p/--preserve_acl           Copy the ACL from the source key to the
-                                destination key once it has been transferred
-                                (only applies in S3 to S3 transfer mode).
+                                destination key (only applies in S3/GS to S3/GS
+                                transfer mode).
     -e/--encrypt_keys           Enable server-side encryption on files copied
                                 to S3 (only applies when S3 is the destination).
     --delete                    Delete extraneous files from destination dirs
@@ -92,7 +96,7 @@ or
 
 ## Known Issues and Limitations ##
 
- * Due to the nature of how directories work in S3, some non-standard folder
+ * Due to the nature of how directories work in S3/GS, some non-standard folder
 structures might not transfer correctly. Empty directories may also be
 overlooked in some cases. When in doubt, use "-n" first.
  * Differences between keys/files are assumed _only_ by checking the size.

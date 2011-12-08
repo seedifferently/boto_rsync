@@ -1,5 +1,9 @@
 # Changelog #
 
+## v0.5 -- ??/??/2011 ##
+
+ * Added initial support for Google Storage.
+
 ## v0.4 -- 12/04/2011 ##
 
  * Refactored the callback to be more accurate (hopefully).

@@ -34,7 +34,7 @@ http://github.com/seedifferently/boto_rsync
 SYNOPSIS
     boto-rsync is a rough adaptation of boto's s3put script which has been
     reengineered to more closely mimic rsync. Its goal is to provide a familiar
-    rsync-like wrapper for boto.
+    rsync-like wrapper for boto's S3 and Google Storage interfaces.
 
     By default, the script works recursively and differences between files are
     checked by comparing file sizes (e.g. rsync's --recursive and --size-only
@@ -45,34 +45,37 @@ USAGE
     boto-rsync [OPTIONS] SOURCE DESTINATION
     
     SOURCE and DESTINATION can either be a local path to a directory or specific
-    file, a custom S3 URI to a directory or specific key in the format of
-    s3://bucketname/path/or/key, or a S3 to S3 transfer using two S3 URIs.
+    file, a custom S3 or GS URI to a directory or specific key in the format of
+    s3://bucketname/path/or/key, a S3 to S3 transfer using two S3 URIs, or
+    a GS to GS transfer using two GS URIs.
 
 EXAMPLES
     boto-rsync [OPTIONS] /local/path/ s3://bucketname/remote/path/
  or
-    boto-rsync [OPTIONS] s3://bucketname/remote/path/or/key /local/path/
+    boto-rsync [OPTIONS] gs://bucketname/remote/path/or/key /local/path/
  or
     boto-rsync [OPTIONS] s3://bucketname/ s3://another_bucket/
 
 OPTIONS
-    -a/--access_key <key>       Your AWS Access Key ID. If not supplied, boto
+    -a/--access_key <key>       Your Access Key ID. If not supplied, boto will
+                                use the value of the environment variable
+                                AWS_ACCESS_KEY_ID (for S3) or GS_ACCESS_KEY_ID
+                                (for GS).
+    -s/--secret_key <secret>    Your Secret Access Key. If not supplied, boto
                                 will use the value of the environment variable
-                                AWS_ACCESS_KEY_ID
-    -s/--secret_key <secret>    Your AWS Secret Access Key. If not supplied,
-                                boto will use the value of the environment
-                                variable AWS_SECRET_ACCESS_KEY
+                                AWS_ACCESS_KEY_ID (for S3) or GS_ACCESS_KEY_ID
+                                (for GS).
     -d/--debug <debug_level>    0 means no debug output (default), 1 means
                                 normal debug output from boto, and 2 means boto
                                 debug output plus request/response output from
-                                httplib
-    -r/--reduced                Enable reduced redundancy on files copied to S3
-                                (only applies when S3 is the destination).
+                                httplib.
+    -r/--reduced                Enable reduced redundancy on files copied to S3.
     -g/--grant <policy>         A canned ACL policy that will be granted on each
-                                file transferred to S3. The value of provided
+                                file transferred to S3/GS. The value provided
                                 must be one of the "canned" ACL policies
-                                supported by S3: private, public-read,
-                                public-read-write, or authenticated-read
+                                supported by S3/GS: private, public-read,
+                                public-read-write (S3 only), or
+                                authenticated-read
     -w/--no_overwrite           No files will be overwritten, if the file/key
                                 exists on the destination it will be kept. Note
                                 that this is not a sync--even if the file has
@@ -81,11 +84,12 @@ OPTIONS
     --ignore_empty              Ignore empty (0-byte) keys/files/directories.
                                 This will skip the transferring of empty
                                 directories and keys/files whose size is 0.
-                                Warning: S3 sometimes uses empty keys with a "/"
-                                at the end of its name to specify a directory.
+                                Warning: S3/GS often uses empty keys with
+                                special trailing characters to specify
+                                directories.
     -p/--preserve_acl           Copy the ACL from the source key to the
-                                destination key once it has been transferred
-                                (only applies in S3 to S3 transfer mode).
+                                destination key (only applies in S3/GS to S3/GS
+                                transfer mode).
     -e/--encrypt_keys           Enable server-side encryption on files copied
                                 to S3 (only applies when S3 is the destination).
     --delete                    Delete extraneous files from destination dirs
@@ -210,7 +214,7 @@ def submit_cb(bytes_so_far, total_bytes):
     sys.stdout.flush()
 
 def get_key_name(fullpath, prefix):
-    """Returns a S3 key compatible name for a file."""
+    """Returns a key compatible name for a file."""
     key_name = fullpath[len(prefix):]
     l = key_name.split(os.sep)
     key_name = '/'.join(l)
@@ -242,8 +246,8 @@ def main():
     
     signal.signal(signal.SIGINT, signal_handler)
     ev = None
-    aws_access_key_id = None
-    aws_secret_access_key = None
+    cloud_access_key_id = None
+    cloud_secret_access_key = None
     total = 0
     debug = 0
     speeds = []
@@ -265,7 +269,7 @@ def main():
             usage()
             sys.exit()
         if o in ('-a', '--access_key'):
-            aws_access_key_id = a
+            cloud_access_key_id = a
         if o in ('-b', '--bucket'):
             bucket_name = a
         if o in ('-d', '--debug'):
@@ -289,70 +293,99 @@ def main():
         if o in ('--delete'):
             delete = True
         if o in ('-s', '--secret_key'):
-            aws_secret_access_key = a
+            cloud_secret_access_key = a
     if len(args) != 2:
         print usage()
     
     if not args[0].startswith('s3://') and args[1].startswith('s3://'):
-        # S3 upload sync
+        # Cloud upload sync
+        cloud_service = 's3'
         path = get_full_path(args[0])
-        s3_bucket = args[1][5:].split('/')[0]
-        s3_path = args[1][(len(s3_bucket) + 5):]
+        cloud_bucket = args[1][5:].split('/')[0]
+        cloud_path = args[1][(len(cloud_bucket) + 5):]
         xfer_type = 'upload'
     elif args[0].startswith('s3://') and not args[1].startswith('s3://'):
-        # S3 download sync
-        s3_bucket = args[0][5:].split('/')[0]
-        s3_path = args[0][(len(s3_bucket) + 5):]
+        # Cloud download sync
+        cloud_service = 's3'
+        cloud_bucket = args[0][5:].split('/')[0]
+        cloud_path = args[0][(len(cloud_bucket) + 5):]
+        path = get_full_path(args[1])
+        xfer_type = 'download'
+    elif not args[0].startswith('gs://') and args[1].startswith('gs://'):
+        # Cloud upload sync
+        cloud_service = 'gs'
+        path = get_full_path(args[0])
+        cloud_bucket = args[1][5:].split('/')[0]
+        cloud_path = args[1][(len(cloud_bucket) + 5):]
+        xfer_type = 'upload'
+    elif args[0].startswith('gs://') and not args[1].startswith('gs://'):
+        # Cloud download sync
+        cloud_service = 'gs'
+        cloud_bucket = args[0][5:].split('/')[0]
+        cloud_path = args[0][(len(cloud_bucket) + 5):]
         path = get_full_path(args[1])
         xfer_type = 'download'
     elif args[0].startswith('s3://') and args[1].startswith('s3://'):
         # S3 to S3 sync
-        s3_bucket = args[0][5:].split('/')[0]
-        s3_path = args[0][(len(s3_bucket) + 5):]
-        s3_dest_bucket = args[1][5:].split('/')[0]
-        s3_dest_path = args[1][(len(s3_dest_bucket) + 5):]
+        cloud_service = 's3'
+        cloud_bucket = args[0][5:].split('/')[0]
+        cloud_path = args[0][(len(cloud_bucket) + 5):]
+        cloud_dest_bucket = args[1][5:].split('/')[0]
+        cloud_dest_path = args[1][(len(cloud_dest_bucket) + 5):]
+        xfer_type = 'sync'
+    elif args[0].startswith('gs://') and args[1].startswith('gs://'):
+        # GS to GS sync
+        cloud_service = 'gs'
+        cloud_bucket = args[0][5:].split('/')[0]
+        cloud_path = args[0][(len(cloud_bucket) + 5):]
+        cloud_dest_bucket = args[1][5:].split('/')[0]
+        cloud_dest_path = args[1][(len(cloud_dest_bucket) + 5):]
         xfer_type = 'sync'
     else:
         usage()
     
-    # S3 paths shouldn't have a leading slash
-    s3_path = s3_path.lstrip('/')
+    # Cloud paths shouldn't have a leading slash
+    cloud_path = cloud_path.lstrip('/')
     
     if xfer_type in ['download', 'upload']:
         if not os.path.isdir(path) and not os.path.split(path)[0]:
             print '\nERROR: %s is not a valid path (does it exist?)' % (path)
             usage()
-        elif not s3_bucket or len(s3_bucket) < 3:
-            print '\nERROR: S3 bucket name is invalid'
+        elif not cloud_bucket or len(cloud_bucket) < 3:
+            print '\nERROR: Bucket name is invalid'
             usage()
     elif xfer_type in ['sync']:
-        if not s3_bucket or len(s3_bucket) < 3 and \
-           not s3_dest_bucket or len(s3_dest_bucket) < 3:
-            print '\nERROR: S3 bucket name is invalid'
+        if not cloud_bucket or len(cloud_bucket) < 3 and \
+           not cloud_dest_bucket or len(cloud_dest_bucket) < 3:
+            print '\nERROR: Bucket name is invalid'
             usage()
         
-        # S3 paths shouldn't have a leading slash
-        s3_dest_path = s3_dest_path.lstrip('/')
+        # Cloud paths shouldn't have a leading slash
+        cloud_dest_path = cloud_dest_path.lstrip('/')
     
     
-    # Connect to S3
-    c = boto.connect_s3(aws_access_key_id=aws_access_key_id,
-                        aws_secret_access_key=aws_secret_access_key)
+    # Connect to Cloud
+    if cloud_service == 'gs':
+        c = boto.connect_gs(gs_access_key_id=cloud_access_key_id,
+                            gs_secret_access_key=cloud_secret_access_key)
+    else:
+        c = boto.connect_s3(aws_access_key_id=cloud_access_key_id,
+                            aws_secret_access_key=cloud_secret_access_key)
     c.debug = debug
-    b = c.get_bucket(s3_bucket)
+    b = c.get_bucket(cloud_bucket)
     if xfer_type in ['sync']:
-        b2 = c.get_bucket(s3_dest_bucket)
+        b2 = c.get_bucket(cloud_dest_bucket)
     
     if xfer_type == 'upload':
-        # Perform S3 "upload"
+        # Perform cloud "upload"
         
         if os.path.isdir(path):
             # Possible multi file upload
-            sys.stdout.write('Scanning S3 for files to transfer...  ')
+            sys.stdout.write('Scanning for files to transfer...  ')
             sys.stdout.flush()
             
-            if s3_path and not s3_path.endswith('/'):
-                s3_path += '/'
+            if cloud_path and not cloud_path.endswith('/'):
+                cloud_path += '/'
             
             # Start "spinner" thread
             ev = threading.Event()
@@ -361,7 +394,7 @@ def main():
             
             try:
                 keys = {}
-                for key in b.list(prefix=s3_path):
+                for key in b.list(prefix=cloud_path):
                     keys[key.name] = key.size
             except Exception, e:
                 raise e
@@ -378,7 +411,7 @@ def main():
                 if files:
                     for file in files:
                         fullpath = os.path.join(root, file)
-                        key_name = s3_path + get_key_name(fullpath, path)
+                        key_name = cloud_path + get_key_name(fullpath, path)
                         file_size = os.path.getsize(fullpath)
                         
                         if file_size == 0:
@@ -412,10 +445,16 @@ def main():
                             
                             # Send the file
                             k = b.new_key(key_name)
-                            k.set_contents_from_filename(
-                                fullpath, cb=cb, num_cb=num_cb, policy=grant,
-                                reduced_redundancy=reduced, encrypt_key=encrypt
-                                )
+                            if cloud_service == 'gs':
+                                k.set_contents_from_filename(
+                                    fullpath, cb=cb, num_cb=num_cb, policy=grant
+                                    )
+                            else:
+                                k.set_contents_from_filename(
+                                    fullpath, cb=cb, num_cb=num_cb,
+                                    policy=grant, reduced_redundancy=reduced,
+                                    encrypt_key=encrypt
+                                    )
                             keys[key_name] = file_size
                             
                             # Clean stdout
@@ -423,20 +462,31 @@ def main():
                 
                 # Check for empty subdirectories
                 elif root != path:
-                    key_name = s3_path + get_key_name(root, path) + '/'
+                    if cloud_service == 'gs':
+                        key_name = cloud_path + get_key_name(root, path) + \
+                                   '_$folder$'
+                    else:
+                        key_name = cloud_path + get_key_name(root, path) + '/'
                     
                     if ignore_empty:
                         if not quiet:
-                            print 'Skipping %s (empty directory)' % key_name
+                            print 'Skipping %s (empty directory)' % (
+                                key_name.replace('_$folder$', '/')
+                                )
                         continue
                     elif key_name in keys:
                         if no_overwrite:
                             if not quiet:
-                                print 'Skipping %s (not overwriting)' % key_name
+                                print 'Skipping %s (not overwriting)' % (
+                                    key_name.replace('_$folder$', '/')
+                                    )
                             continue
-                        elif key_name.endswith('/'):
+                        elif key_name.endswith('/') or \
+                             key_name.endswith('_$folder$'):
                             if not quiet:
-                                print 'Skipping %s (size matches)' % key_name
+                                print 'Skipping %s (size matches)' % (
+                                    key_name.replace('_$folder$', '/')
+                                    )
                             continue
                     
                     print '%s' % os.path.join(root[len(path):], '').lstrip('/')
@@ -446,10 +496,15 @@ def main():
                         
                         # Send the directory
                         k = b.new_key(key_name)
-                        k.set_contents_from_string(
-                            '', cb=cb, num_cb=num_cb, policy=grant,
-                            reduced_redundancy=reduced, encrypt_key=encrypt
-                            )
+                        if cloud_service == 'gs':
+                            k.set_contents_from_string(
+                                '', cb=cb, num_cb=num_cb, policy=grant
+                                )
+                        else:
+                            k.set_contents_from_string(
+                                '', cb=cb, num_cb=num_cb, policy=grant,
+                                reduced_redundancy=reduced, encrypt_key=encrypt
+                                )
                         keys[key_name] = 0
                         
                         # Clean stdout
@@ -457,33 +512,41 @@ def main():
             
             # If specified, perform deletes
             if delete:
-                if s3_path and s3_path in keys:
-                    del(keys[s3_path])
+                if cloud_path and cloud_path in keys:
+                    del(keys[cloud_path])
                 
                 for root, dirs, files in os.walk(path):
                     for file in files:
                         fullpath = os.path.join(root, file)
-                        key_name = s3_path + get_key_name(fullpath, path)
+                        key_name = cloud_path + get_key_name(fullpath, path)
                         if key_name in keys:
                             del(keys[key_name])
                     
                     if root != path:
-                        key_name = s3_path + get_key_name(root, path) + '/'
+                        if cloud_service == 'gs':
+                            key_name = cloud_path + get_key_name(root, path) + \
+                                       '_$folder$'
+                        else:
+                            key_name = cloud_path + get_key_name(root, path) + \
+                                       '/'
+                        
                         if key_name in keys:
                             del(keys[key_name])
                 
                 for key_name, key_size in keys.iteritems():
-                    print 'deleting %s' % key_name[len(s3_path):]
+                    print 'deleting %s' % (
+                        key_name[len(cloud_path):].replace('_$folder$', '/')
+                        )
                     if not no_op:
                         # Delete the key
                         b.delete_key(key_name)
         
         elif os.path.isfile(path):
             # Single file upload
-            if s3_path and not s3_path.endswith('/'):
-                key_name = s3_path
+            if cloud_path and not cloud_path.endswith('/'):
+                key_name = cloud_path
             else:
-                key_name = s3_path + os.path.split(path)[1]
+                key_name = cloud_path + os.path.split(path)[1]
             filename = os.path.split(path)[1]
             file_size = os.path.getsize(path)
             
@@ -530,25 +593,30 @@ def main():
                     
                     # Send the file
                     k = b.new_key(key_name)
-                    k.set_contents_from_filename(
-                        path, cb=cb, num_cb=num_cb, policy=grant,
-                        reduced_redundancy=reduced, encrypt_key=encrypt
-                        )
+                    if cloud_service == 'gs':
+                        k.set_contents_from_filename(
+                            path, cb=cb, num_cb=num_cb, policy=grant
+                            )
+                    else:
+                        k.set_contents_from_filename(
+                            path, cb=cb, num_cb=num_cb, policy=grant,
+                            reduced_redundancy=reduced, encrypt_key=encrypt
+                            )
                     
                     # Clean stdout
                     print ''
     
     elif xfer_type == 'download':
-        # Perform S3 "download"
+        # Perform cloud "download"
         
-        if s3_path:
-            s3_path_key = b.get_key(s3_path)
+        if cloud_path:
+            cloud_path_key = b.get_key(cloud_path)
         else:
-            s3_path_key = None
+            cloud_path_key = None
         
-        if s3_path_key and not s3_path_key.name.endswith('/'):
+        if cloud_path_key and not cloud_path_key.name.endswith('/'):
             # Single file download
-            key = s3_path_key
+            key = cloud_path_key
             keypath = key.name.split('/')[-1]
             if not os.path.isdir(path) and not path.endswith(os.sep):
                 rename = True
@@ -620,16 +688,23 @@ def main():
         
         else:
             # Possible multi file download
-            if not s3_path_key and s3_path and not s3_path.endswith('/'):
-                s3_path += '/'
+            if not cloud_path_key and cloud_path and \
+               not cloud_path.endswith('/'):
+                cloud_path += '/'
             
             keys = []
             
-            print 'Scanning S3 for keys to transfer...'
+            print 'Scanning for keys to transfer...'
             
-            for key in b.list(prefix=s3_path):
-                keypath = key.name[len(s3_path):]
-                fullpath = os.path.join(path, keypath.replace('/', os.sep))
+            for key in b.list(prefix=cloud_path):
+                keypath = key.name[len(cloud_path):]
+                if cloud_service == 'gs':
+                    fullpath = os.path.join(
+                        path,
+                        keypath.replace('_$folder$', os.sep)
+                        )
+                else:
+                    fullpath = os.path.join(path, keypath.replace('/', os.sep))
                 keys.append(fullpath)
                 
                 if key.size == 0:
@@ -655,17 +730,21 @@ def main():
                                 )
                         continue
                     elif key.size == os.path.getsize(fullpath) or \
-                         key.name.endswith('/'):
+                         key.name.endswith('/') or \
+                         key.name.endswith('_$folder$'):
                         if not quiet:
                             print 'Skipping %s (size matches)' % (
                                 fullpath[len(os.path.join(path, '')):]
                                 )
                         continue
                 
-                print '%s' % (keypath.replace('/', os.sep))
+                if cloud_service == 'gs':
+                    print '%s' % (keypath.replace('_$folder$', os.sep))
+                else:
+                    print '%s' % (keypath.replace('/', os.sep))
                 
                 if not no_op:
-                    if key.name.endswith('/'):
+                    if key.name.endswith('/') or key.name.endswith('_$folder$'):
                         # Looks like a directory, so just print the status
                         submit_cb(0, 0)
                     else:
@@ -702,22 +781,22 @@ def main():
                                 # Remove the directory
                                 os.rmdir(dirpath)
     else:
-        # Perform S3 to S3 "sync"
+        # Perform cloud to cloud "sync"
         
-        if s3_path:
-            s3_path_key = b.get_key(s3_path)
+        if cloud_path:
+            cloud_path_key = b.get_key(cloud_path)
         else:
-            s3_path_key = None
+            cloud_path_key = None
         
-        if s3_path_key and not s3_path_key.name.endswith('/'):
+        if cloud_path_key and not cloud_path_key.name.endswith('/'):
             # Single file sync
-            key = s3_path_key
+            key = cloud_path_key
             keypath = key.name.split('/')[-1]
-            if s3_dest_path and not s3_dest_path.endswith('/'):
+            if cloud_dest_path and not cloud_dest_path.endswith('/'):
                 rename = True
-                fullpath = s3_dest_path
+                fullpath = cloud_dest_path
             else:
-                fullpath = s3_dest_path + keypath
+                fullpath = cloud_dest_path + keypath
                 fullpath = fullpath.lstrip('/')
             
             dest_key = b2.get_key(fullpath)
@@ -772,7 +851,7 @@ def main():
                     
                     try:
                         # Transfer the key
-                        key.copy(s3_dest_bucket, fullpath,
+                        key.copy(cloud_dest_bucket, fullpath,
                                  reduced_redundancy=reduced,
                                  preserve_acl=preserve, encrypt_key=encrypt)
                     except Exception, e:
@@ -804,21 +883,22 @@ def main():
         
         else:
             # Possible multi file sync
-            if not s3_path_key and s3_path and not s3_path.endswith('/'):
-                s3_path += '/'
-            if s3_dest_path and not s3_dest_path.endswith('/'):
-                s3_dest_path += '/'
+            if not cloud_path_key and cloud_path and \
+               not cloud_path.endswith('/'):
+                cloud_path += '/'
+            if cloud_dest_path and not cloud_dest_path.endswith('/'):
+                cloud_dest_path += '/'
             
             keys = []
             
-            print 'Scanning S3 for keys to transfer...'
+            print 'Scanning for keys to transfer...'
             
-            for key in b.list(prefix=s3_path):
-                if key.name == s3_path:
+            for key in b.list(prefix=cloud_path):
+                if key.name == cloud_path:
                     keypath = key.name.split('/')[-2] + '/'
                 else:
-                    keypath = key.name[len(s3_path):]
-                fullpath = s3_dest_path + keypath
+                    keypath = key.name[len(cloud_path):]
+                fullpath = cloud_dest_path + keypath
                 fullpath = fullpath.lstrip('/')
                 
                 keys.append(fullpath)
@@ -827,21 +907,27 @@ def main():
                 if key.size == 0:
                     if ignore_empty:
                         if not quiet:
-                            print 'Skipping %s (empty key)' % fullpath
+                            print 'Skipping %s (empty key)' % (
+                                fullpath.replace('_$folder$', '/')
+                                )
                         continue
                 
                 if dest_key:
                     # TODO: Check for differing ACL
                     if no_overwrite:
                         if not quiet:
-                            print 'Skipping %s (not overwriting)' % fullpath
+                            print 'Skipping %s (not overwriting)' % (
+                                fullpath.replace('_$folder$', '/')
+                                )
                         continue
                     elif key.size == dest_key.size:
                         if not quiet:
-                            print 'Skipping %s (size matches)' % fullpath
+                            print 'Skipping %s (size matches)' % (
+                                fullpath.replace('_$folder$', '/')
+                                )
                         continue
                 
-                sys.stdout.write('%s...  ' % keypath)
+                sys.stdout.write('%s...  ' % keypath.replace('_$folder$', '/'))
                 sys.stdout.flush()
                 if not no_op:
                     speeds.append((0, time.time()))
@@ -853,7 +939,7 @@ def main():
                     
                     # Transfer the key
                     try:
-                        key.copy(s3_dest_bucket, fullpath,
+                        key.copy(cloud_dest_bucket, fullpath,
                                  reduced_redundancy=reduced,
                                  preserve_acl=preserve, encrypt_key=encrypt)
                     except Exception, e:
@@ -863,11 +949,13 @@ def main():
                         ev.set()
                         t1.join()
                     
-                    sys.stdout.write('\r%s    \n' % keypath)
+                    sys.stdout.write('\r%s    \n' % \
+                                     keypath.replace('_$folder$', '/'))
                     sys.stdout.flush()
                     submit_cb(key.size, key.size)
                 else:
-                    sys.stdout.write('\r%s    ' % keypath)
+                    sys.stdout.write('\r%s    ' % \
+                                     keypath.replace('_$folder$', '/'))
                     sys.stdout.flush()
                 
                 # Clean stdout
@@ -875,11 +963,11 @@ def main():
             
             # If specified, perform deletes
             if delete:
-                for key in b2.list(prefix=s3_dest_path):
-                    keypath = key.name[len(s3_dest_path):]
+                for key in b2.list(prefix=cloud_dest_path):
+                    keypath = key.name[len(cloud_dest_path):]
                     
                     if key.name not in keys:
-                        print 'deleting %s' % keypath
+                        print 'deleting %s' % keypath.replace('_$folder$', '/')
                         if not no_op:
                             # Delete the key
                             key.delete()

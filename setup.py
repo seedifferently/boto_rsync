@@ -17,12 +17,13 @@ if sys.version_info <= (2, 4):
 setup(
     name='boto_rsync',
     version=__version__,
-    description="An rsync-like wrapper for boto's S3 interfaces.",
+    description="An rsync-like wrapper for boto's S3 and Google Storage " + \
+                "interfaces.",
     long_description=read('README.md'),
     author='Seth Davis',
     author_email='seth@curiasolutions.com',
     url='http://github.com/seedifferently/boto_rsync',
-    keywords='boto amazon aws s3 cloud sync rsync',
+    keywords='boto amazon aws s3 gs google storage cloud sync rsync',
     packages=['boto_rsync'],
     install_requires=['boto>=2.0'],
     scripts=[
