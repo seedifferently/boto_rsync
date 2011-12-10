@@ -30,7 +30,7 @@ setup(
     url='http://github.com/seedifferently/boto_rsync',
     keywords='boto amazon aws s3 gs google storage cloud sync rsync',
     packages=['boto_rsync'],
-    install_requires=['boto>=2.0'],
+    install_requires=['boto>=2.1'],
     scripts=[
         'boto_rsync/boto-rsync',
     ],
