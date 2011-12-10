@@ -3,12 +3,15 @@ Changelog
 ================================================================================
 
 
-v0.5, v0.5.1, v0.5.2 -- 12/08/2011, 12/09/2011
+v0.5 - v0.5.3 -- 12/08/2011 - 12/10/2011
 ================================================================================
 
 * Added initial support for Google Storage.
+* Added info on boto's advanced configuration options.
+* Fixed boto's version requirement. The "encrypt_key" option requires boto v2.1
+  or greater.
 * Fixed issues with PyPI.
-* Updating setup script.
+* Fixed/updated setup script.
 
 
 v0.4 -- 12/04/2011
@@ -19,20 +22,15 @@ v0.4 -- 12/04/2011
 * Fixed a bug where SIGINT might not exit properly.
 
 
-v0.3.1 -- 11/30/2011
-================================================================================
-
-* Fixed a bug where the beginning of file/key names were sometimes stripped.
-* Fixed a bug where directory downloads sometimes crashed.
-
-
-v0.3 -- 11/30/2011
+v0.3 - v0.3.1 -- 11/30/2011
 ================================================================================
 
 * Added an ASCII spinner to help the user understand that the process hasn't
   hung.
 * Fixed bugs from the --ignore_empty and directory features that were added in
   v0.2.
+* Fixed a bug where the beginning of file/key names were sometimes stripped.
+* Fixed a bug where directory downloads sometimes crashed.
 
 
 v0.2 -- 11/29/2011
