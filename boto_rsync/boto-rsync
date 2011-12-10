@@ -99,10 +99,11 @@ OPTIONS
                                 messages will be printed about what would happen
                                 (e.g. rsync's --dry-run).
     -v/--verbose                Print additional informational messages.
+
 """
 def usage():
     """Prints the usage string and exits."""
-    print usage_string
+    sys.stdout.write(usage_string)
     
     sys.exit()
 
@@ -228,7 +229,7 @@ def signal_handler(signum, frame):
         if ev:
             ev.set()
         
-        print ''
+        sys.stdout.write('\n')
         sys.exit(0)
 
 def main():
@@ -295,7 +296,7 @@ def main():
         if o in ('-s', '--secret_key'):
             cloud_secret_access_key = a
     if len(args) != 2:
-        print usage()
+        usage()
     
     if not args[0].startswith('s3://') and args[1].startswith('s3://'):
         # Cloud upload sync
@@ -349,15 +350,17 @@ def main():
     
     if xfer_type in ['download', 'upload']:
         if not os.path.isdir(path) and not os.path.split(path)[0]:
-            print '\nERROR: %s is not a valid path (does it exist?)' % (path)
+            sys.stdout.write(
+                '\nERROR: %s is not a valid path (does it exist?)\n' % path
+                )
             usage()
         elif not cloud_bucket or len(cloud_bucket) < 3:
-            print '\nERROR: Bucket name is invalid'
+            sys.stdout.write('\nERROR: Bucket name is invalid\n')
             usage()
     elif xfer_type in ['sync']:
         if not cloud_bucket or len(cloud_bucket) < 3 and \
            not cloud_dest_bucket or len(cloud_dest_bucket) < 3:
-            print '\nERROR: Bucket name is invalid'
+            sys.stdout.write('\nERROR: Bucket name is invalid\n')
             usage()
         
         # Cloud paths shouldn't have a leading slash
@@ -404,7 +407,7 @@ def main():
                 t1.join()
                 
                 # Clean stdout
-                print ''
+                sys.stdout.write('\n')
             
             # "Walk" the directory and upload files
             for root, dirs, files in os.walk(path):
@@ -417,7 +420,8 @@ def main():
                         if file_size == 0:
                             if ignore_empty:
                                 if not quiet:
-                                    print 'Skipping %s (empty file)' % (
+                                    sys.stdout.write(
+                                        'Skipping %s (empty file)\n' %
                                         fullpath[len(path):].lstrip('/')
                                         )
                                 continue
@@ -425,19 +429,24 @@ def main():
                         if key_name in keys:
                             if no_overwrite:
                                 if not quiet:
-                                    print 'Skipping %s (not overwriting)' % (
+                                    sys.stdout.write(
+                                        'Skipping %s (not overwriting)\n' %
                                         fullpath[len(path):].lstrip('/')
                                         )
                                 continue
                             elif keys[key_name] == file_size or \
                                  key_name.endswith('/'):
                                 if not quiet:
-                                    print 'Skipping %s (size matches)' % (
+                                    sys.stdout.write(
+                                        'Skipping %s (size matches)\n' %
                                         fullpath[len(path):].lstrip('/')
                                         )
                                 continue
                         
-                        print '%s' % fullpath[len(path):].lstrip('/')
+                        sys.stdout.write(
+                            '%s\n' %
+                            fullpath[len(path):].lstrip('/')
+                            )
                         
                         if not no_op:
                             # Setup callback
@@ -458,7 +467,7 @@ def main():
                             keys[key_name] = file_size
                             
                             # Clean stdout
-                            print ''
+                            sys.stdout.write('\n')
                 
                 # Check for empty subdirectories
                 elif root != path:
@@ -470,26 +479,32 @@ def main():
                     
                     if ignore_empty:
                         if not quiet:
-                            print 'Skipping %s (empty directory)' % (
+                            sys.stdout.write(
+                                'Skipping %s (empty directory)\n' %
                                 key_name.replace('_$folder$', '/')
                                 )
                         continue
                     elif key_name in keys:
                         if no_overwrite:
                             if not quiet:
-                                print 'Skipping %s (not overwriting)' % (
+                                sys.stdout.write(
+                                    'Skipping %s (not overwriting)\n' %
                                     key_name.replace('_$folder$', '/')
                                     )
                             continue
                         elif key_name.endswith('/') or \
                              key_name.endswith('_$folder$'):
                             if not quiet:
-                                print 'Skipping %s (size matches)' % (
+                                sys.stdout.write(
+                                    'Skipping %s (size matches)\n' %
                                     key_name.replace('_$folder$', '/')
                                     )
                             continue
                     
-                    print '%s' % os.path.join(root[len(path):], '').lstrip('/')
+                    sys.stdout.write(
+                        '%s\n' %
+                        os.path.join(root[len(path):], '').lstrip('/')
+                        )
                     if not no_op:
                         # Setup callback
                         num_cb = 1
@@ -508,7 +523,7 @@ def main():
                         keys[key_name] = 0
                         
                         # Clean stdout
-                        print ''
+                        sys.stdout.write('\n')
             
             # If specified, perform deletes
             if delete:
@@ -534,7 +549,8 @@ def main():
                             del(keys[key_name])
                 
                 for key_name, key_size in keys.iteritems():
-                    print 'deleting %s' % (
+                    sys.stdout.write(
+                        'deleting %s\n' %
                         key_name[len(cloud_path):].replace('_$folder$', '/')
                         )
                     if not no_op:
@@ -556,7 +572,8 @@ def main():
             if file_size == 0:
                 if ignore_empty:
                     if not quiet:
-                        print 'Skipping %s -> %s (empty file)' % (
+                        sys.stdout.write(
+                            'Skipping %s -> %s (empty file)\n' %
                             filename, key_name.split('/')[-1]
                             )
                     copy_file = False
@@ -566,26 +583,31 @@ def main():
                     copy_file = False
                     if not quiet:
                         if filename != key_name.split('/')[-1]:
-                            print 'Skipping %s -> %s (not overwriting)' % (
+                            sys.stdout.write(
+                                'Skipping %s -> %s (not overwriting)\n' %
                                 filename, key_name.split('/')[-1]
                                 )
                         else:
-                            print 'Skipping %s (not overwriting)' % filename
+                            sys.stdout.write('Skipping %s (not overwriting)\n' %
+                                             filename)
                 elif key.size == file_size:
                     copy_file = False
                     if not quiet:
                         if filename != key_name.split('/')[-1]:
-                            print 'Skipping %s -> %s (size matches)' % (
+                            sys.stdout.write(
+                                'Skipping %s -> %s (size matches)\n' %
                                 filename, key_name.split('/')[-1]
                                 )
                         else:
-                            print 'Skipping %s (size matches)' % filename
+                            sys.stdout.write('Skipping %s (size matches)\n' %
+                                             filename)
             
             if copy_file:
                 if filename != key_name.split('/')[-1]:
-                    print '%s -> %s' % (filename, key_name.split('/')[-1])
+                    sys.stdout.write('%s -> %s\n' %
+                                     (filename, key_name.split('/')[-1]))
                 else:
-                    print '%s' % filename
+                    sys.stdout.write('%s\n' % filename)
                 
                 if not no_op:
                     # Setup callback
@@ -604,7 +626,7 @@ def main():
                             )
                     
                     # Clean stdout
-                    print ''
+                    sys.stdout.write('\n')
     
     elif xfer_type == 'download':
         # Perform cloud "download"
@@ -628,18 +650,21 @@ def main():
                 if ignore_empty:
                     if not quiet:
                         if rename:
-                            print 'Skipping %s -> %s (empty key)' % (
+                            sys.stdout.write(
+                                'Skipping %s -> %s (empty key)\n' %
                                 keypath, fullpath.split(os.sep)[-1]
                                 )
                         else:
-                            print 'Skipping %s (empty key)' % (
+                            sys.stdout.write(
+                                'Skipping %s (empty key)\n' %
                                 fullpath.split(os.sep)[-1]
                                 )
                     copy_file = False
             
             if not os.path.isdir(os.path.split(fullpath)[0]):
                 if not quiet:
-                    print 'Creating new directory: %s' % (
+                    sys.stdout.write(
+                        'Creating new directory: %s\n' %
                         os.path.split(fullpath)[0]
                         )
                 if not no_op:
@@ -648,11 +673,13 @@ def main():
                 if no_overwrite:
                     if not quiet:
                         if rename:
-                            print 'Skipping %s -> %s (not overwriting)' % (
+                            sys.stdout.write(
+                                'Skipping %s -> %s (not overwriting)\n' %
                                 keypath, fullpath.split(os.sep)[-1]
                                 )
                         else:
-                            print 'Skipping %s (not overwriting)' % (
+                            sys.stdout.write(
+                                'Skipping %s (not overwriting)\n' %
                                 fullpath.split(os.sep)[-1]
                                 )
                     copy_file = False
@@ -660,21 +687,25 @@ def main():
                      key.name.endswith('/'):
                     if not quiet:
                         if rename:
-                            print 'Skipping %s -> %s (size matches)' % (
+                            sys.stdout.write(
+                                'Skipping %s -> %s (size matches)\n' %
                                 keypath.replace('/', os.sep),
                                 fullpath.split(os.sep)[-1]
                                 )
                         else:
-                            print 'Skipping %s (size matches)' % (
+                            sys.stdout.write(
+                                'Skipping %s (size matches)\n' %
                                 fullpath.split(os.sep)[-1]
                                 )
                     copy_file = False
             
             if copy_file:
                 if rename:
-                    print '%s -> %s' % (keypath, fullpath.split(os.sep)[-1])
+                    sys.stdout.write(
+                        '%s -> %s\n' % (keypath, fullpath.split(os.sep)[-1])
+                        )
                 else:
-                    print '%s' % keypath
+                    sys.stdout.write('%s\n' % keypath)
                 
                 if not no_op:
                     # Setup callback
@@ -684,7 +715,7 @@ def main():
                     key.get_contents_to_filename(fullpath, cb=cb, num_cb=num_cb)
                     
                     # Clean stdout
-                    print ''
+                    sys.stdout.write('\n')
         
         else:
             # Possible multi file download
@@ -694,7 +725,7 @@ def main():
             
             keys = []
             
-            print 'Scanning for keys to transfer...'
+            sys.stdout.write('Scanning for keys to transfer...\n')
             
             for key in b.list(prefix=cloud_path):
                 keypath = key.name[len(cloud_path):]
@@ -710,14 +741,16 @@ def main():
                 if key.size == 0:
                     if ignore_empty:
                         if not quiet:
-                            print 'Skipping %s (empty key)' % (
+                            sys.stdout.write(
+                                'Skipping %s (empty key)\n' %
                                 fullpath[len(os.path.join(path, '')):]
                                 )
                         continue
                 
                 if not os.path.isdir(os.path.split(fullpath)[0]):
                     if not quiet:
-                        print 'Creating new directory: %s' % (
+                        sys.stdout.write(
+                            'Creating new directory: %s\n' %
                             os.path.split(fullpath)[0]
                             )
                     if not no_op:
@@ -725,7 +758,8 @@ def main():
                 elif os.path.exists(fullpath):
                     if no_overwrite:
                         if not quiet:
-                            print 'Skipping %s (not overwriting)' % (
+                            sys.stdout.write(
+                                'Skipping %s (not overwriting)\n' %
                                 fullpath[len(os.path.join(path, '')):]
                                 )
                         continue
@@ -733,15 +767,17 @@ def main():
                          key.name.endswith('/') or \
                          key.name.endswith('_$folder$'):
                         if not quiet:
-                            print 'Skipping %s (size matches)' % (
+                            sys.stdout.write(
+                                'Skipping %s (size matches)\n' %
                                 fullpath[len(os.path.join(path, '')):]
                                 )
                         continue
                 
                 if cloud_service == 'gs':
-                    print '%s' % (keypath.replace('_$folder$', os.sep))
+                    sys.stdout.write('%s\n' %
+                                     keypath.replace('_$folder$', os.sep))
                 else:
-                    print '%s' % (keypath.replace('/', os.sep))
+                    sys.stdout.write('%s\n' % keypath.replace('/', os.sep))
                 
                 if not no_op:
                     if key.name.endswith('/') or key.name.endswith('_$folder$'):
@@ -756,7 +792,7 @@ def main():
                                                      num_cb=num_cb)
                     
                     # Clean stdout
-                    print ''
+                    sys.stdout.write('\n')
             
             # If specified, perform deletes
             if delete:
@@ -765,18 +801,20 @@ def main():
                         for file in files:
                             filepath = os.path.join(root, file)
                             if filepath not in keys:
-                                print 'deleting %s' % (
-                                  filepath[len(os.path.join(path, '')):]
-                                  )
+                                sys.stdout.write(
+                                    'deleting %s\n' %
+                                    filepath[len(os.path.join(path, '')):]
+                                    )
                                 if not no_op:
                                     # Delete the file
                                     os.remove(filepath)
                     elif root != path:
                         dirpath = os.path.join(root, '')
                         if dirpath not in keys:
-                            print 'deleting %s' % (
-                              dirpath[len(os.path.join(path, '')):]
-                              )
+                            sys.stdout.write(
+                                'deleting %s\n' %
+                                dirpath[len(os.path.join(path, '')):]
+                                )
                             if not no_op:
                                 # Remove the directory
                                 os.rmdir(dirpath)
@@ -805,11 +843,14 @@ def main():
                 if ignore_empty:
                     if not quiet:
                         if rename:
-                            print 'Skipping %s -> %s (empty key)' % (
+                            sys.stdout.write(
+                                'Skipping %s -> %s (empty key)\n' %
                                 keypath.split('/')[-1], fullpath.split('/')[-1]
                                 )
                         else:
-                            print 'Skipping %s (empty key)' % fullpath
+                            sys.stdout.write(
+                                'Skipping %s (empty key)\n' % fullpath
+                                )
                     copy_file = False
             
             if dest_key:
@@ -817,20 +858,26 @@ def main():
                 if no_overwrite:
                     if not quiet:
                         if rename:
-                            print 'Skipping %s -> %s (not overwriting)' % (
+                            sys.stdout.write(
+                                'Skipping %s -> %s (not overwriting)\n' %
                                 keypath.split('/')[-1], fullpath.split('/')[-1]
                                 )
                         else:
-                            print 'Skipping %s (not overwriting)' % fullpath
+                            sys.stdout.write(
+                                'Skipping %s (not overwriting)\n' % fullpath
+                                )
                     copy_file = False
                 elif key.size == dest_key.size:
                     if not quiet:
                         if rename:
-                            print 'Skipping %s -> %s (size matches)' % (
+                            sys.stdout.write(
+                                'Skipping %s -> %s (size matches)\n' %
                                 keypath.split('/')[-1], fullpath.split('/')[-1]
                                 )
                         else:
-                            print 'Skipping %s (size matches)' % fullpath
+                            sys.stdout.write(
+                                'Skipping %s (size matches)\n' % fullpath
+                                )
                     copy_file = False
             
             if copy_file:
@@ -879,7 +926,7 @@ def main():
                     sys.stdout.flush()
                 
                 # Clean stdout
-                print ''
+                sys.stdout.write('\n')
         
         else:
             # Possible multi file sync
@@ -891,7 +938,7 @@ def main():
             
             keys = []
             
-            print 'Scanning for keys to transfer...'
+            sys.stdout.write('Scanning for keys to transfer...\n')
             
             for key in b.list(prefix=cloud_path):
                 if key.name == cloud_path:
@@ -907,7 +954,8 @@ def main():
                 if key.size == 0:
                     if ignore_empty:
                         if not quiet:
-                            print 'Skipping %s (empty key)' % (
+                            sys.stdout.write(
+                                'Skipping %s (empty key)\n' %
                                 fullpath.replace('_$folder$', '/')
                                 )
                         continue
@@ -916,13 +964,15 @@ def main():
                     # TODO: Check for differing ACL
                     if no_overwrite:
                         if not quiet:
-                            print 'Skipping %s (not overwriting)' % (
+                            sys.stdout.write(
+                                'Skipping %s (not overwriting)\n' %
                                 fullpath.replace('_$folder$', '/')
                                 )
                         continue
                     elif key.size == dest_key.size:
                         if not quiet:
-                            print 'Skipping %s (size matches)' % (
+                            sys.stdout.write(
+                                'Skipping %s (size matches)\n' %
                                 fullpath.replace('_$folder$', '/')
                                 )
                         continue
@@ -959,7 +1009,7 @@ def main():
                     sys.stdout.flush()
                 
                 # Clean stdout
-                print ''
+                sys.stdout.write('\n')
             
             # If specified, perform deletes
             if delete:
@@ -967,7 +1017,9 @@ def main():
                     keypath = key.name[len(cloud_dest_path):]
                     
                     if key.name not in keys:
-                        print 'deleting %s' % keypath.replace('_$folder$', '/')
+                        sys.stdout.write(
+                            'deleting %s\n' % keypath.replace('_$folder$', '/')
+                            )
                         if not no_op:
                             # Delete the key
                             key.delete()
