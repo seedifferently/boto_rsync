@@ -6,8 +6,9 @@ except ImportError:
 
 from boto_rsync import __version__
 
-if sys.version_info[:2] < (2, 5):
-    raise RuntimeError('Requires Python 2.5 or above')
+if sys.version_info[0] >= 3 or sys.version_info[:2] < (2, 5):
+    raise RuntimeError('Requires Python 2.5 or above and does not support ' + \
+                       'Python 3')
 
 here = os.path.abspath(os.path.dirname(__file__))
 try:
