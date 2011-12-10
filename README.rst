@@ -113,6 +113,13 @@ Options
     -v/--verbose                Print additional informational messages.
 
 
+Advanced Configuration Options
+--------------------------------------------------------------------------------
+
+Advanced configuration options for boto are also available. More information can
+be found here: http://code.google.com/p/boto/wiki/BotoConfig
+
+
 Known Issues and Limitations
 ================================================================================
 
