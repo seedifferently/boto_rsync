@@ -58,13 +58,11 @@ EXAMPLES
 
 OPTIONS
     -a/--access_key <key>       Your Access Key ID. If not supplied, boto will
-                                use the value of the environment variable
-                                AWS_ACCESS_KEY_ID (for S3) or GS_ACCESS_KEY_ID
-                                (for GS).
-    -s/--secret_key <secret>    Your Secret Access Key. If not supplied, boto
-                                will use the value of the environment variable
-                                AWS_ACCESS_KEY_ID (for S3) or GS_ACCESS_KEY_ID
-                                (for GS).
+                                look for an environment variable or a
+                                credentials file (see README.rst for more info).
+    -s/--secret_key <secret>    Your Secret Key. If not supplied, boto will look
+                                for an environment variable or a credentials
+                                file (see README.rst for more info).
     -d/--debug <debug_level>    0 means no debug output (default), 1 means
                                 normal debug output from boto, and 2 means boto
                                 debug output plus request/response output from
@@ -88,8 +86,8 @@ OPTIONS
                                 special trailing characters to specify
                                 directories.
     -p/--preserve_acl           Copy the ACL from the source key to the
-                                destination key (only applies in S3/GS to S3/GS
-                                transfer mode).
+                                destination key (only applies in S3/S3 and GS/GS
+                                transfer modes).
     -e/--encrypt_keys           Enable server-side encryption on files copied
                                 to S3 (only applies when S3 is the destination).
     --delete                    Delete extraneous files from destination dirs

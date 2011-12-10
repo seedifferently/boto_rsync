@@ -2,8 +2,8 @@
 boto rsync v0.5.2
 ================================================================================
 
-Copyright (c) 2011 Seth Davis    
-http://github.com/seedifferently/boto_rsync
+| Copyright: (c) 2011 Seth Davis
+| http://github.com/seedifferently/boto_rsync
 
 
 Synopsis
@@ -42,10 +42,13 @@ Usage
 
     boto-rsync [OPTIONS] SOURCE DESTINATION
 
-SOURCE and DESTINATION can either be a local path to a directory or specific
-file, a custom S3 or GS URI to a directory or specific key in the format of
-s3://bucketname/path/or/key, a S3 to S3 transfer using two S3 URIs, or
-a GS to GS transfer using two GS URIs.
+SOURCE and DESTINATION can be:
+
+* A local path to a directory or specific file
+* A custom S3 or GS URI to a directory or specific key in the format of
+  s3://bucketname/path/or/key
+* A S3 to S3 transfer using two S3 URIs
+* A GS to GS transfer using two GS URIs
 
 
 Examples
@@ -70,13 +73,11 @@ Options
 ::
 
     -a/--access_key <key>       Your Access Key ID. If not supplied, boto will
-                                use the value of the environment variable
-                                AWS_ACCESS_KEY_ID (for S3) or GS_ACCESS_KEY_ID
-                                (for GS).
-    -s/--secret_key <secret>    Your Secret Access Key. If not supplied, boto
-                                will use the value of the environment variable
-                                AWS_ACCESS_KEY_ID (for S3) or GS_ACCESS_KEY_ID
-                                (for GS).
+                                look for an environment variable or a
+                                credentials file (see README.rst for more info).
+    -s/--secret_key <secret>    Your Secret Key. If not supplied, boto will look
+                                for an environment variable or a credentials
+                                file (see README.rst for more info).
     -d/--debug <debug_level>    0 means no debug output (default), 1 means
                                 normal debug output from boto, and 2 means boto
                                 debug output plus request/response output from
@@ -100,8 +101,8 @@ Options
                                 special trailing characters to specify
                                 directories.
     -p/--preserve_acl           Copy the ACL from the source key to the
-                                destination key (only applies in S3/GS to S3/GS
-                                transfer mode).
+                                destination key (only applies in S3/S3 and GS/GS
+                                transfer modes).
     -e/--encrypt_keys           Enable server-side encryption on files copied
                                 to S3 (only applies when S3 is the destination).
     --delete                    Delete extraneous files from destination dirs
@@ -116,23 +117,27 @@ Options
 Advanced Configuration Options
 --------------------------------------------------------------------------------
 
-Advanced configuration options for boto are also available. More information can
-be found here: http://code.google.com/p/boto/wiki/BotoConfig
+boto supports the option to read access/secret keys from the environment or from
+a credentials file. Set the AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY or
+GS_ACCESS_KEY_ID/GS_SECRET_ACCESS_KEY environment variables or use boto's
+advanced configuration options to set up a credentials file.
+
+More information on boto's advanced configuration options can be found here:
+http://code.google.com/p/boto/wiki/BotoConfig
 
 
 Known Issues and Limitations
 ================================================================================
 
+* Differences between keys/files are assumed *only* by checking the size.
 * Due to the nature of how directories work in S3/GS, some non-standard folder
   structures might not transfer correctly. Empty directories may also be
   overlooked in some cases. When in doubt, use "-n" first.
-* Differences between keys/files are assumed _only_ by checking the size.
-* Python 3.x support has not yet been tested.
 * At this time, the script does not take advantage of boto's "multipart"
   transfer methods. (pull requests welcome!)
-* As of this writing, the release version of boto (2.1.1) seems to be buggy
-  when attempting to perform GS to GS transfers. Use the latest boto github
-  source if you need this functionality.
+* The release version of boto as of this writing (2.1.1) seems to be buggy when
+  attempting to perform GS to GS transfers. Use the latest boto github source
+  if you need this functionality.
 
 
 Disclaimers and Warnings
