@@ -431,7 +431,7 @@ def main():
                                 if not quiet:
                                     sys.stdout.write(
                                         'Skipping %s (empty file)\n' %
-                                        fullpath[len(path):].lstrip('/')
+                                        fullpath[len(path):].lstrip(os.sep)
                                         )
                                 continue
                         
@@ -440,7 +440,7 @@ def main():
                                 if not quiet:
                                     sys.stdout.write(
                                         'Skipping %s (not overwriting)\n' %
-                                        fullpath[len(path):].lstrip('/')
+                                        fullpath[len(path):].lstrip(os.sep)
                                         )
                                 continue
                             elif keys[key_name] == file_size or \
@@ -448,13 +448,13 @@ def main():
                                 if not quiet:
                                     sys.stdout.write(
                                         'Skipping %s (size matches)\n' %
-                                        fullpath[len(path):].lstrip('/')
+                                        fullpath[len(path):].lstrip(os.sep)
                                         )
                                 continue
                         
                         sys.stdout.write(
                             '%s\n' %
-                            fullpath[len(path):].lstrip('/')
+                            fullpath[len(path):].lstrip(os.sep)
                             )
                         
                         if not no_op:
@@ -512,7 +512,7 @@ def main():
                     
                     sys.stdout.write(
                         '%s\n' %
-                        os.path.join(root[len(path):], '').lstrip('/')
+                        os.path.join(root[len(path):], '').lstrip(os.sep)
                         )
                     if not no_op:
                         # Setup callback
