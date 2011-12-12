@@ -74,6 +74,7 @@ OPTIONS
                                 supported by S3/GS: private, public-read,
                                 public-read-write (S3 only), or
                                 authenticated-read
+    --no_recurse                Do not recurse into directories.
     -w/--no_overwrite           No files will be overwritten, if the file/key
                                 exists on the destination it will be kept. Note
                                 that this is not a sync--even if the file has
@@ -237,8 +238,8 @@ def main():
         opts, args = getopt.getopt(
                 sys.argv[1:], 'a:s:d:rg:wpei:nvh',
                 ['access_key', 'secret_key', 'debug', 'reduced', 'grant',
-                 'no_overwrite', 'ignore_empty', 'preserve_acl', 'encrypt_keys',
-                 'delete', 'no_op', 'verbose', 'help']
+                 'no_recurse', 'no_overwrite', 'ignore_empty', 'preserve_acl',
+                 'encrypt_keys', 'delete', 'no_op', 'verbose', 'help']
                 )
     except:
         usage()
@@ -255,6 +256,7 @@ def main():
     quiet = True
     no_op = False
     grant = None
+    no_recurse = False
     no_overwrite = False
     ignore_empty = False
     reduced = False
@@ -277,6 +279,8 @@ def main():
             grant = a
         if o in ('-n', '--no_op'):
             no_op = True
+        if o in ('--no_recurse'):
+            no_recurse = True
         if o in ('-w', '--no_overwrite'):
             no_overwrite = True
         if o in ('--ignore_empty'):
@@ -396,6 +400,9 @@ def main():
             try:
                 keys = {}
                 for key in b.list(prefix=cloud_path):
+                    if no_recurse and '/' in key.name[len(cloud_path):]:
+                        continue
+                    
                     keys[key.name] = key.size
             except Exception, e:
                 raise e
@@ -409,6 +416,10 @@ def main():
             
             # "Walk" the directory and upload files
             for root, dirs, files in os.walk(path):
+                if no_recurse:
+                    if root != path:
+                        continue
+                
                 if files:
                     for file in files:
                         fullpath = os.path.join(root, file)
@@ -529,6 +540,10 @@ def main():
                     del(keys[cloud_path])
                 
                 for root, dirs, files in os.walk(path):
+                    if no_recurse:
+                        if root != path:
+                            continue
+                    
                     for file in files:
                         fullpath = os.path.join(root, file)
                         key_name = cloud_path + get_key_name(fullpath, path)
@@ -726,6 +741,9 @@ def main():
             sys.stdout.write('Scanning for keys to transfer...\n')
             
             for key in b.list(prefix=cloud_path):
+                if no_recurse and '/' in key.name[len(cloud_path):]:
+                    continue
+                
                 keypath = key.name[len(cloud_path):]
                 if cloud_service == 'gs':
                     fullpath = os.path.join(
@@ -734,6 +752,7 @@ def main():
                         )
                 else:
                     fullpath = os.path.join(path, keypath.replace('/', os.sep))
+                
                 keys.append(fullpath)
                 
                 if key.size == 0:
@@ -795,6 +814,10 @@ def main():
             # If specified, perform deletes
             if delete:
                 for root, dirs, files in os.walk(path):
+                    if no_recurse:
+                        if root != path:
+                            continue
+                    
                     if files:
                         for file in files:
                             filepath = os.path.join(root, file)
@@ -939,6 +962,9 @@ def main():
             sys.stdout.write('Scanning for keys to transfer...\n')
             
             for key in b.list(prefix=cloud_path):
+                if no_recurse and '/' in key.name[len(cloud_path):]:
+                    continue
+                
                 if key.name == cloud_path:
                     keypath = key.name.split('/')[-2] + '/'
                 else:
@@ -1012,6 +1038,9 @@ def main():
             # If specified, perform deletes
             if delete:
                 for key in b2.list(prefix=cloud_dest_path):
+                    if no_recurse and '/' in key.name[len(cloud_dest_path):]:
+                        continue
+                    
                     keypath = key.name[len(cloud_dest_path):]
                     
                     if key.name not in keys:
