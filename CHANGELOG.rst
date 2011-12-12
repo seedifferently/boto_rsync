@@ -3,15 +3,27 @@ Changelog
 ================================================================================
 
 
-v0.5 - v0.5.3 -- 12/08/2011 - 12/10/2011
+v0.6 -- 12/11/2011
 ================================================================================
 
-* Added initial support for Google Storage.
+* Added the --no_recurse option.
+* Fixed an issue where output on Windows was improperly formatted.
+
+
+v0.5.1 - v0.5.3 -- 12/08/2011 - 12/10/2011
+================================================================================
+
 * Added info on boto's advanced configuration options.
 * Fixed boto's version requirement. The "encrypt_key" option requires boto v2.1
   or greater.
 * Fixed issues with PyPI.
 * Fixed/updated setup script.
+
+
+v0.5 -- 12/08/2011
+================================================================================
+
+* Added initial support for Google Storage.
 
 
 v0.4 -- 12/04/2011
