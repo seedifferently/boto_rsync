@@ -89,6 +89,7 @@ Options
                                 supported by S3/GS: private, public-read,
                                 public-read-write (S3 only), or
                                 authenticated-read
+    --no_recurse                Do not recurse into directories.
     -w/--no_overwrite           No files will be overwritten, if the file/key
                                 exists on the destination it will be kept. Note
                                 that this is not a sync--even if the file has
