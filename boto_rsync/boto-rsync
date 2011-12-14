@@ -300,29 +300,34 @@ def main():
     if len(args) != 2:
         usage()
     
-    if not args[0].startswith('s3://') and args[1].startswith('s3://'):
-        # Cloud upload sync
+    if (args[0].startswith('s3://') and args[1].startswith('gs://') or
+        args[0].startswith('gs://') and args[1].startswith('s3://')):
+        sys.stderr.write('ERROR: You cannot directly sync between S3 and ' +
+                         'Google Storage.\n')
+        usage()
+    elif not args[0].startswith('s3://') and args[1].startswith('s3://'):
+        # S3 upload sync
         cloud_service = 's3'
         path = get_full_path(args[0])
         cloud_bucket = args[1][5:].split('/')[0]
         cloud_path = args[1][(len(cloud_bucket) + 5):]
         xfer_type = 'upload'
     elif args[0].startswith('s3://') and not args[1].startswith('s3://'):
-        # Cloud download sync
+        # S3 download sync
         cloud_service = 's3'
         cloud_bucket = args[0][5:].split('/')[0]
         cloud_path = args[0][(len(cloud_bucket) + 5):]
         path = get_full_path(args[1])
         xfer_type = 'download'
     elif not args[0].startswith('gs://') and args[1].startswith('gs://'):
-        # Cloud upload sync
+        # GS upload sync
         cloud_service = 'gs'
         path = get_full_path(args[0])
         cloud_bucket = args[1][5:].split('/')[0]
         cloud_path = args[1][(len(cloud_bucket) + 5):]
         xfer_type = 'upload'
     elif args[0].startswith('gs://') and not args[1].startswith('gs://'):
-        # Cloud download sync
+        # GS download sync
         cloud_service = 'gs'
         cloud_bucket = args[0][5:].split('/')[0]
         cloud_path = args[0][(len(cloud_bucket) + 5):]
