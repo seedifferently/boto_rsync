@@ -63,6 +63,8 @@ OPTIONS
     -s/--secret_key <secret>    Your Secret Key. If not supplied, boto will look
                                 for an environment variable or a credentials
                                 file (see README.rst for more info).
+    -e/--endpoint <host>        Specify a specific S3 endpoint to connect to via
+                                boto's "host" connection argument (S3 only).
     -d/--debug <debug_level>    0 means no debug output (default), 1 means
                                 normal debug output from boto, and 2 means boto
                                 debug output plus request/response output from
@@ -236,10 +238,11 @@ def main():
     
     try:
         opts, args = getopt.getopt(
-                sys.argv[1:], 'a:s:d:rg:wpei:nvh',
-                ['access_key', 'secret_key', 'debug', 'reduced', 'grant',
-                 'no_recurse', 'no_overwrite', 'ignore_empty', 'preserve_acl',
-                 'encrypt_keys', 'delete', 'no_op', 'verbose', 'help']
+                sys.argv[1:], 'a:s:e:d:rg:wpei:nvh',
+                ['access_key', 'secret_key', 'endpoint', 'debug', 'reduced',
+                 'grant', 'no_recurse', 'no_overwrite', 'ignore_empty',
+                 'preserve_acl', 'encrypt_keys', 'delete', 'no_op', 'verbose',
+                 'help']
                 )
     except:
         usage()
@@ -248,6 +251,7 @@ def main():
     ev = None
     cloud_access_key_id = None
     cloud_secret_access_key = None
+    endpoint = 's3.amazonaws.com'
     total = 0
     debug = 0
     speeds = []
@@ -271,6 +275,8 @@ def main():
             sys.exit()
         if o in ('-a', '--access_key'):
             cloud_access_key_id = a
+        if o in ('-e', '--endpoint'):
+            endpoint = a
         if o in ('-b', '--bucket'):
             bucket_name = a
         if o in ('-d', '--debug'):
@@ -380,7 +386,8 @@ def main():
                             gs_secret_access_key=cloud_secret_access_key)
     else:
         c = boto.connect_s3(aws_access_key_id=cloud_access_key_id,
-                            aws_secret_access_key=cloud_secret_access_key)
+                            aws_secret_access_key=cloud_secret_access_key,
+                            host=endpoint)
     c.debug = debug
     b = c.get_bucket(cloud_bucket)
     if xfer_type in ['sync']:
