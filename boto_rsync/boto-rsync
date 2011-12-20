@@ -275,16 +275,16 @@ def main():
             sys.exit()
         if o in ('-a', '--access_key'):
             cloud_access_key_id = a
+        if o in ('-s', '--secret_key'):
+            cloud_secret_access_key = a
         if o in ('-e', '--endpoint'):
             endpoint = a
-        if o in ('-b', '--bucket'):
-            bucket_name = a
         if o in ('-d', '--debug'):
             debug = int(a)
+        if o in ('-r', '--reduced'):
+            reduced = True
         if o in ('-g', '--grant'):
             grant = a
-        if o in ('-n', '--no_op'):
-            no_op = True
         if o in ('--no_recurse'):
             no_recurse = True
         if o in ('-w', '--no_overwrite'):
@@ -295,14 +295,12 @@ def main():
             preserve = True
         if o in ('-e', '--encrypt_keys'):
             encrypt = True
-        if o in ('-r', '--reduced'):
-            reduced = True
-        if o in ('-v', '--verbose'):
-            quiet = False
         if o in ('--delete'):
             delete = True
-        if o in ('-s', '--secret_key'):
-            cloud_secret_access_key = a
+        if o in ('-n', '--no_op'):
+            no_op = True
+        if o in ('-v', '--verbose'):
+            quiet = False
     if len(args) != 2:
         usage()
     
