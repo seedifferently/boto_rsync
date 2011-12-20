@@ -78,6 +78,8 @@ Options
     -s/--secret_key <secret>    Your Secret Key. If not supplied, boto will look
                                 for an environment variable or a credentials
                                 file (see README.rst for more info).
+    -e/--endpoint <host>        Specify a specific S3 endpoint to connect to via
+                                boto's "host" connection argument (S3 only).
     -d/--debug <debug_level>    0 means no debug output (default), 1 means
                                 normal debug output from boto, and 2 means boto
                                 debug output plus request/response output from
