@@ -78,36 +78,32 @@ Options
     -s/--secret_key <secret>    Your Secret Key. If not supplied, boto will look
                                 for an environment variable or a credentials
                                 file (see README.rst for more info).
-    -e/--endpoint <host>        Specify a specific S3 endpoint to connect to via
+    --endpoint <host>           Specify a specific S3 endpoint to connect to via
                                 boto's "host" connection argument (S3 only).
-    -d/--debug <debug_level>    0 means no debug output (default), 1 means
-                                normal debug output from boto, and 2 means boto
-                                debug output plus request/response output from
-                                httplib.
-    -r/--reduced                Enable reduced redundancy on files copied to S3.
     -g/--grant <policy>         A canned ACL policy that will be granted on each
                                 file transferred to S3/GS. The value provided
                                 must be one of the "canned" ACL policies
                                 supported by S3/GS: private, public-read,
                                 public-read-write (S3 only), or
                                 authenticated-read
-    --no_recurse                Do not recurse into directories.
+    -r/--reduced                Enable reduced redundancy on files copied to S3.
+    -e/--encrypt_keys           Enable server-side encryption on files copied
+                                to S3 (only applies when S3 is the destination).
+    -p/--preserve_acl           Copy the ACL from the source key to the
+                                destination key (only applies in S3/S3 and GS/GS
+                                transfer modes).
     -w/--no_overwrite           No files will be overwritten, if the file/key
                                 exists on the destination it will be kept. Note
                                 that this is not a sync--even if the file has
                                 been updated on the source it will not be
                                 updated on the destination.
+    --no_recurse                Do not recurse into directories.
     --ignore_empty              Ignore empty (0-byte) keys/files/directories.
                                 This will skip the transferring of empty
                                 directories and keys/files whose size is 0.
                                 Warning: S3/GS often uses empty keys with
                                 special trailing characters to specify
                                 directories.
-    -p/--preserve_acl           Copy the ACL from the source key to the
-                                destination key (only applies in S3/S3 and GS/GS
-                                transfer modes).
-    -e/--encrypt_keys           Enable server-side encryption on files copied
-                                to S3 (only applies when S3 is the destination).
     --delete                    Delete extraneous files from destination dirs
                                 after the transfer has finished (e.g. rsync's
                                 --delete-after).
@@ -115,6 +111,10 @@ Options
                                 messages will be printed about what would happen
                                 (e.g. rsync's --dry-run).
     -v/--verbose                Print additional informational messages.
+    -d/--debug <debug_level>    0 means no debug output (default), 1 means
+                                normal debug output from boto, and 2 means boto
+                                debug output plus request/response output from
+                                httplib.
 
 
 Advanced Configuration Options
