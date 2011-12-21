@@ -134,6 +134,7 @@ Known Issues and Limitations
 * Due to the nature of how directories work in S3/GS, some non-standard folder
   structures might not transfer correctly. Empty directories may also be
   overlooked in some cases. When in doubt, use "-n" first.
+* "Globbing" (e.g. ``*.zip``) is not currently supported.
 * At this time, the script does not take advantage of boto's "multipart"
   transfer methods. (pull requests welcome!)
 * The release version of boto as of this writing (2.1.1) seems to be buggy when
