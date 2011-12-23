@@ -58,10 +58,10 @@ EXAMPLES
     boto-rsync [OPTIONS] s3://bucketname/ s3://another_bucket/
 
 OPTIONS
-    -a/--access_key <key>       Your Access Key ID. If not supplied, boto will
+    -a/--access-key <key>       Your Access Key ID. If not supplied, boto will
                                 look for an environment variable or a
                                 credentials file (see README.rst for more info).
-    -s/--secret_key <secret>    Your Secret Key. If not supplied, boto will look
+    -s/--secret-key <secret>    Your Secret Key. If not supplied, boto will look
                                 for an environment variable or a credentials
                                 file (see README.rst for more info).
     --endpoint <host>           Specify a specific S3 endpoint to connect to via
@@ -73,12 +73,12 @@ OPTIONS
                                 public-read-write (S3 only), or
                                 authenticated-read
     -r/--reduced                Enable reduced redundancy on files copied to S3.
-    -e/--encrypt_keys           Enable server-side encryption on files copied
+    -e/--encrypt-keys           Enable server-side encryption on files copied
                                 to S3 (only applies when S3 is the destination).
-    -p/--preserve_acl           Copy the ACL from the source key to the
+    -p/--preserve-acl           Copy the ACL from the source key to the
                                 destination key (only applies in S3/S3 and GS/GS
                                 transfer modes).
-    -w/--no_overwrite           No files will be overwritten, if the file/key
+    -w/--no-overwrite           No files will be overwritten, if the file/key
                                 exists on the destination it will be kept. Note
                                 that this is not a sync--even if the file has
                                 been updated on the source it will not be
@@ -89,8 +89,8 @@ OPTIONS
                                 your CLI's automatic filename expansion is
                                 disabled (typically accomplished by enclosing
                                 SOURCE in quotes, e.g. "/path/*.zip").
-    --no_recurse                Do not recurse into directories.
-    --ignore_empty              Ignore empty (0-byte) keys/files/directories.
+    --no-recurse                Do not recurse into directories.
+    --ignore-empty              Ignore empty (0-byte) keys/files/directories.
                                 This will skip the transferring of empty
                                 directories and keys/files whose size is 0.
                                 Warning: S3/GS often uses empty keys with
@@ -99,11 +99,11 @@ OPTIONS
     --delete                    Delete extraneous files from destination dirs
                                 after the transfer has finished (e.g. rsync's
                                 --delete-after).
-    -n/--no_op                  No files will be transferred, but informational
-                                messages will be printed about what would happen
-                                (e.g. rsync's --dry-run).
+    -n/--dry-run                No files will be transferred, but informational
+                                messages will be printed about what would have
+                                happened.
     -v/--verbose                Print additional informational messages.
-    -d/--debug <debug_level>    0 means no debug output (default), 1 means
+    -d/--debug <level>          Level 0 means no debug output (default), 1 means
                                 normal debug output from boto, and 2 means boto
                                 debug output plus request/response output from
                                 httplib.
@@ -246,9 +246,9 @@ def main():
     try:
         opts, args = getopt.getopt(
                 sys.argv[1:], 'a:s:g:repwnvd:h',
-                ['access_key=', 'secret_key=', 'endpoint=', 'grant=',
-                 'reduced', 'encrypt_keys', 'preserve_acl', 'no_overwrite',
-                 'glob', 'no_recurse', 'ignore_empty', 'delete', 'no_op',
+                ['access-key=', 'secret-key=', 'endpoint=', 'grant=',
+                 'reduced', 'encrypt-keys', 'preserve-acl', 'no-overwrite',
+                 'glob', 'no-recurse', 'ignore-empty', 'delete', 'dry-run',
                  'verbose', 'debug=', 'help']
             )
     except:
@@ -279,9 +279,9 @@ def main():
     debug = 0
     
     for o, a in opts:
-        if o in ('-a', '--access_key'):
+        if o in ('-a', '--access-key'):
             cloud_access_key_id = a
-        if o in ('-s', '--secret_key'):
+        if o in ('-s', '--secret-key'):
             cloud_secret_access_key = a
         if o in ('--endpoint'):
             endpoint = a
@@ -289,22 +289,22 @@ def main():
             grant = a
         if o in ('-r', '--reduced'):
             reduced = True
-        if o in ('-e', '--encrypt_keys'):
+        if o in ('-e', '--encrypt-keys'):
             encrypt = True
-        if o in ('-p', '--preserve_acl'):
+        if o in ('-p', '--preserve-acl'):
             preserve = True
-        if o in ('-w', '--no_overwrite'):
+        if o in ('-w', '--no-overwrite'):
             no_overwrite = True
         if o in ('--glob'):
             glob = True
             no_recurse = True
-        if o in ('--no_recurse'):
+        if o in ('--no-recurse'):
             no_recurse = True
-        if o in ('--ignore_empty'):
+        if o in ('--ignore-empty'):
             ignore_empty = True
         if o in ('--delete'):
             delete = True
-        if o in ('-n', '--no_op'):
+        if o in ('-n', '--dry-run'):
             no_op = True
         if o in ('-v', '--verbose'):
             quiet = False

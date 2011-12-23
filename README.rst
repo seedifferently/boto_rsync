@@ -73,10 +73,10 @@ Options
 
 ::
 
-    -a/--access_key <key>       Your Access Key ID. If not supplied, boto will
+    -a/--access-key <key>       Your Access Key ID. If not supplied, boto will
                                 look for an environment variable or a
                                 credentials file.
-    -s/--secret_key <secret>    Your Secret Key. If not supplied, boto will look
+    -s/--secret-key <secret>    Your Secret Key. If not supplied, boto will look
                                 for an environment variable or a credentials
                                 file.
     --endpoint <host>           Specify a specific S3 endpoint to connect to via
@@ -88,12 +88,12 @@ Options
                                 public-read-write (S3 only), or
                                 authenticated-read
     -r/--reduced                Enable reduced redundancy on files copied to S3.
-    -e/--encrypt_keys           Enable server-side encryption on files copied
+    -e/--encrypt-keys           Enable server-side encryption on files copied
                                 to S3 (only applies when S3 is the destination).
-    -p/--preserve_acl           Copy the ACL from the source key to the
+    -p/--preserve-acl           Copy the ACL from the source key to the
                                 destination key (only applies in S3/S3 and GS/GS
                                 transfer modes).
-    -w/--no_overwrite           No files will be overwritten, if the file/key
+    -w/--no-overwrite           No files will be overwritten, if the file/key
                                 exists on the destination it will be kept. Note
                                 that this is not a sync--even if the file has
                                 been updated on the source it will not be
@@ -104,8 +104,8 @@ Options
                                 your CLI's automatic filename expansion is
                                 disabled (typically accomplished by enclosing
                                 SOURCE in quotes, e.g. "/path/*.zip").
-    --no_recurse                Do not recurse into directories.
-    --ignore_empty              Ignore empty (0-byte) keys/files/directories.
+    --no-recurse                Do not recurse into directories.
+    --ignore-empty              Ignore empty (0-byte) keys/files/directories.
                                 This will skip the transferring of empty
                                 directories and keys/files whose size is 0.
                                 Warning: S3/GS often uses empty keys with
@@ -114,11 +114,11 @@ Options
     --delete                    Delete extraneous files from destination dirs
                                 after the transfer has finished (e.g. rsync's
                                 --delete-after).
-    -n/--no_op                  No files will be transferred, but informational
-                                messages will be printed about what would happen
-                                (e.g. rsync's --dry-run).
+    -n/--dry-run                No files will be transferred, but informational
+                                messages will be printed about what would have
+                                happened.
     -v/--verbose                Print additional informational messages.
-    -d/--debug <debug_level>    0 means no debug output (default), 1 means
+    -d/--debug <level>          Level 0 means no debug output (default), 1 means
                                 normal debug output from boto, and 2 means boto
                                 debug output plus request/response output from
                                 httplib.
