@@ -1,5 +1,6 @@
 *.pyc
 .coverage
+MANIFEST
 tests/
 build/
 dist/
