@@ -26,13 +26,14 @@ To install, simply::
 
     pip install boto_rsync
 
-or::
+* You'll need to have `Python`_ 2.5+ and `pip`_ installed.
+* You might have to be root (or use sudo) for pip to install the script into a
+  globally executable directory in your $PATH.
+* pip should automatically install boto for you, but the advanced user can find
+  it here: http://github.com/boto/boto/
 
-    easy_install boto_rsync
-
-* You'll need to have Python 2.5+ and either pip or setuptools installed.
-* pip/easy_install should automatically install boto for you, but the advanced
-  user can find it here: http://github.com/boto/boto/
+.. _Python: http://www.python.org
+.. _pip: http://www.pip-installer.org
 
 
 Usage
@@ -142,6 +143,7 @@ Known Issues and Limitations
 * Due to the nature of how directories work in S3/GS, some non-standard folder
   structures might not transfer correctly. Empty directories may also be
   overlooked in some cases. When in doubt, use "-n" first.
+* "Globbing" (e.g. ``*.zip``) is not currently supported.
 * At this time, the script does not take advantage of boto's "multipart"
   transfer methods. (pull requests welcome!)
 * The release version of boto as of this writing (2.1.1) seems to be buggy when
