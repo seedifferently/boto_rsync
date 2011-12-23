@@ -246,10 +246,10 @@ def main():
     try:
         opts, args = getopt.getopt(
                 sys.argv[1:], 'a:s:g:repwnvd:h',
-                ['access_key', 'secret_key', 'endpoint', 'grant',
+                ['access_key=', 'secret_key=', 'endpoint=', 'grant=',
                  'reduced', 'encrypt_keys', 'preserve_acl', 'no_overwrite',
                  'glob', 'no_recurse', 'ignore_empty', 'delete', 'no_op',
-                 'verbose', 'debug', 'help']
+                 'verbose', 'debug=', 'help']
             )
     except:
         usage()
