@@ -74,10 +74,10 @@ Options
 
     -a/--access_key <key>       Your Access Key ID. If not supplied, boto will
                                 look for an environment variable or a
-                                credentials file (see README.rst for more info).
+                                credentials file.
     -s/--secret_key <secret>    Your Secret Key. If not supplied, boto will look
                                 for an environment variable or a credentials
-                                file (see README.rst for more info).
+                                file.
     --endpoint <host>           Specify a specific S3 endpoint to connect to via
                                 boto's "host" connection argument (S3 only).
     -g/--grant <policy>         A canned ACL policy that will be granted on each
@@ -97,6 +97,12 @@ Options
                                 that this is not a sync--even if the file has
                                 been updated on the source it will not be
                                 updated on the destination.
+    --glob                      Interpret the tail end of SOURCE as a filename
+                                pattern and filter transfers accordingly.
+                                Note: If globbing a local path, make sure that
+                                your CLI's automatic filename expansion is
+                                disabled (typically accomplished by enclosing
+                                SOURCE in quotes, e.g. "/path/*.zip").
     --no_recurse                Do not recurse into directories.
     --ignore_empty              Ignore empty (0-byte) keys/files/directories.
                                 This will skip the transferring of empty

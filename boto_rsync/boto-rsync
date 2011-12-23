@@ -22,6 +22,7 @@
 # IN THE SOFTWARE.
 #
 import sys, os, time, datetime, getopt, threading, signal
+from fnmatch import fnmatch
 import boto
 
 __version__ = '0.6'
@@ -82,6 +83,12 @@ OPTIONS
                                 that this is not a sync--even if the file has
                                 been updated on the source it will not be
                                 updated on the destination.
+    --glob                      Interpret the tail end of SOURCE as a filename
+                                pattern and filter transfers accordingly.
+                                Note: If globbing a local path, make sure that
+                                your CLI's automatic filename expansion is
+                                disabled (typically accomplished by enclosing
+                                SOURCE in quotes, e.g. "/path/*.zip").
     --no_recurse                Do not recurse into directories.
     --ignore_empty              Ignore empty (0-byte) keys/files/directories.
                                 This will skip the transferring of empty
@@ -241,34 +248,36 @@ def main():
                 sys.argv[1:], 'a:s:g:repwnvd:h',
                 ['access_key', 'secret_key', 'endpoint', 'grant',
                  'reduced', 'encrypt_keys', 'preserve_acl', 'no_overwrite',
-                 'no_recurse', 'ignore_empty', 'delete', 'no_op', 'verbose',
-                 'debug', 'help']
+                 'glob', 'no_recurse', 'ignore_empty', 'delete', 'no_op',
+                 'verbose', 'debug', 'help']
             )
     except:
         usage()
     
     signal.signal(signal.SIGINT, signal_handler)
     ev = None
-    cloud_access_key_id = None
-    cloud_secret_access_key = None
-    endpoint = 's3.amazonaws.com'
-    total = 0
-    debug = 0
     speeds = []
     cb = submit_cb
     num_cb = 10
-    quiet = True
-    no_op = False
-    grant = None
-    no_recurse = False
-    no_overwrite = False
-    ignore_empty = False
-    reduced = False
-    preserve = False
-    encrypt = False
-    delete = False
     rename = False
     copy_file = True
+    
+    cloud_access_key_id = None
+    cloud_secret_access_key = None
+    endpoint = 's3.amazonaws.com'
+    grant = None
+    reduced = False
+    encrypt = False
+    preserve = False
+    no_overwrite = False
+    glob = False
+    no_recurse = False
+    ignore_empty = False
+    delete = False
+    no_op = False
+    quiet = True
+    debug = 0
+    
     for o, a in opts:
         if o in ('-a', '--access_key'):
             cloud_access_key_id = a
@@ -286,6 +295,9 @@ def main():
             preserve = True
         if o in ('-w', '--no_overwrite'):
             no_overwrite = True
+        if o in ('--glob'):
+            glob = True
+            no_recurse = True
         if o in ('--no_recurse'):
             no_recurse = True
         if o in ('--ignore_empty'):
@@ -391,10 +403,17 @@ def main():
     if xfer_type in ['sync']:
         b2 = c.get_bucket(cloud_dest_bucket)
     
+    
     if xfer_type == 'upload':
         # Perform cloud "upload"
         
-        if os.path.isdir(path):
+        # Check for globbing
+        if glob:
+            glob = path.split(os.sep)[-1]
+            if glob:
+                path = path[:-len(glob)]
+        
+        if os.path.isdir(path) or glob:
             # Possible multi file upload
             sys.stdout.write('Scanning for files to transfer...  ')
             sys.stdout.flush()
@@ -411,6 +430,9 @@ def main():
                 keys = {}
                 for key in b.list(prefix=cloud_path):
                     if no_recurse and '/' in key.name[len(cloud_path):]:
+                        continue
+                    
+                    if glob and not fnmatch(key.name.split('/')[-1], glob):
                         continue
                     
                     keys[key.name] = key.size
@@ -432,6 +454,9 @@ def main():
                 
                 if files:
                     for file in files:
+                        if glob and not fnmatch(file, glob):
+                            continue
+                        
                         fullpath = os.path.join(root, file)
                         key_name = cloud_path + get_key_name(fullpath, path)
                         file_size = os.path.getsize(fullpath)
@@ -654,10 +679,19 @@ def main():
     elif xfer_type == 'download':
         # Perform cloud "download"
         
+        cloud_path_key = None
+        
         if cloud_path:
-            cloud_path_key = b.get_key(cloud_path)
+            # Check for globbing
+            if glob:
+                glob = cloud_path.split('/')[-1]
+                if glob:
+                    cloud_path = cloud_path[:-len(glob)]
+            
+            if cloud_path:
+                cloud_path_key = b.get_key(cloud_path)
         else:
-            cloud_path_key = None
+            glob = False
         
         if cloud_path_key and not cloud_path_key.name.endswith('/'):
             # Single file download
@@ -754,6 +788,9 @@ def main():
                 if no_recurse and '/' in key.name[len(cloud_path):]:
                     continue
                 
+                if glob and not fnmatch(key.name.split('/')[-1], glob):
+                    continue
+                
                 keypath = key.name[len(cloud_path):]
                 if cloud_service == 'gs':
                     fullpath = os.path.join(
@@ -830,6 +867,9 @@ def main():
                     
                     if files:
                         for file in files:
+                            if glob and not fnmatch(file, glob):
+                                continue
+                            
                             filepath = os.path.join(root, file)
                             if filepath not in keys:
                                 sys.stdout.write(
@@ -852,10 +892,19 @@ def main():
     else:
         # Perform cloud to cloud "sync"
         
+        cloud_path_key = None
+        
         if cloud_path:
-            cloud_path_key = b.get_key(cloud_path)
+            # Check for globbing
+            if glob:
+                glob = cloud_path.split('/')[-1]
+                if glob:
+                    cloud_path = cloud_path[:-len(glob)]
+            
+            if cloud_path:
+                cloud_path_key = b.get_key(cloud_path)
         else:
-            cloud_path_key = None
+            glob = False
         
         if cloud_path_key and not cloud_path_key.name.endswith('/'):
             # Single file sync
@@ -975,6 +1024,9 @@ def main():
                 if no_recurse and '/' in key.name[len(cloud_path):]:
                     continue
                 
+                if glob and not fnmatch(key.name.split('/')[-1], glob):
+                    continue
+                
                 if key.name == cloud_path:
                     keypath = key.name.split('/')[-2] + '/'
                 else:
@@ -1049,6 +1101,9 @@ def main():
             if delete:
                 for key in b2.list(prefix=cloud_dest_path):
                     if no_recurse and '/' in key.name[len(cloud_dest_path):]:
+                        continue
+                    
+                    if glob and not fnmatch(key.name.split('/')[-1], glob):
                         continue
                     
                     keypath = key.name[len(cloud_dest_path):]
