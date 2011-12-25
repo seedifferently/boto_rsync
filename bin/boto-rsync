@@ -90,6 +90,9 @@ OPTIONS
                                 disabled (typically accomplished by enclosing
                                 SOURCE in quotes, e.g. "/path/*.zip").
     --no-recurse                Do not recurse into directories.
+    --skip-dirkeys              When syncing to S3 or GS, skip the creation of
+                                keys which represent "directories" (an empty
+                                key ending in "/" for S3 or "_$folder$" for GS).
     --ignore-empty              Ignore empty (0-byte) keys/files/directories.
                                 This will skip the transferring of empty
                                 directories and keys/files whose size is 0.
@@ -248,8 +251,8 @@ def main():
                 sys.argv[1:], 'a:s:g:repwnvd:h',
                 ['access-key=', 'secret-key=', 'endpoint=', 'grant=',
                  'reduced', 'encrypt-keys', 'preserve-acl', 'no-overwrite',
-                 'glob', 'no-recurse', 'ignore-empty', 'delete', 'dry-run',
-                 'verbose', 'debug=', 'help']
+                 'glob', 'no-recurse', 'skip-dirkeys', 'ignore-empty', 'delete',
+                 'dry-run', 'verbose', 'debug=', 'help']
             )
     except:
         usage()
@@ -272,6 +275,7 @@ def main():
     no_overwrite = False
     glob = False
     no_recurse = False
+    skip_dirkeys = False
     ignore_empty = False
     delete = False
     no_op = False
@@ -300,6 +304,8 @@ def main():
             no_recurse = True
         elif o == '--no-recurse':
             no_recurse = True
+        elif o == '--skip-dirkeys':
+            skip_dirkeys = True
         elif o == '--ignore-empty':
             ignore_empty = True
         elif o == '--delete':
@@ -453,75 +459,15 @@ def main():
                     if root != path:
                         continue
                 
-                if files:
-                    for file in files:
-                        if glob and not fnmatch(file, glob):
-                            continue
-                        
-                        fullpath = os.path.join(root, file)
-                        key_name = cloud_path + get_key_name(fullpath, path)
-                        file_size = os.path.getsize(fullpath)
-                        
-                        if file_size == 0:
-                            if ignore_empty:
-                                if not quiet:
-                                    sys.stdout.write(
-                                        'Skipping %s (empty file)\n' %
-                                        fullpath[len(path):].lstrip(os.sep)
-                                        )
-                                continue
-                        
-                        if key_name in keys:
-                            if no_overwrite:
-                                if not quiet:
-                                    sys.stdout.write(
-                                        'Skipping %s (not overwriting)\n' %
-                                        fullpath[len(path):].lstrip(os.sep)
-                                        )
-                                continue
-                            elif keys[key_name] == file_size:
-                                if not quiet:
-                                    sys.stdout.write(
-                                        'Skipping %s (size matches)\n' %
-                                        fullpath[len(path):].lstrip(os.sep)
-                                        )
-                                continue
-                        
-                        sys.stdout.write(
-                            '%s\n' %
-                            fullpath[len(path):].lstrip(os.sep)
-                            )
-                        
-                        if not no_op:
-                            # Setup callback
-                            num_cb = int(file_size ** .25)
-                            
-                            # Send the file
-                            k = b.new_key(key_name)
-                            if cloud_service == 'gs':
-                                k.set_contents_from_filename(
-                                    fullpath, cb=cb, num_cb=num_cb, policy=grant
-                                    )
-                            else:
-                                k.set_contents_from_filename(
-                                    fullpath, cb=cb, num_cb=num_cb,
-                                    policy=grant, reduced_redundancy=reduced,
-                                    encrypt_key=encrypt
-                                    )
-                            keys[key_name] = file_size
-                            
-                            # Clean stdout
-                            sys.stdout.write('\n')
-                
-                # Check for empty subdirectories
-                elif root != path:
+                # Create "subdirectories"
+                if root != path and not skip_dirkeys:
                     if cloud_service == 'gs':
                         key_name = cloud_path + get_key_name(root, path) + \
                                    '_$folder$'
                     else:
                         key_name = cloud_path + get_key_name(root, path) + '/'
                     
-                    if ignore_empty:
+                    if ignore_empty and not files:
                         if not quiet:
                             sys.stdout.write(
                                 'Skipping %s (empty directory)\n' %
@@ -565,6 +511,65 @@ def main():
                                 reduced_redundancy=reduced, encrypt_key=encrypt
                                 )
                         keys[key_name] = 0
+                        
+                        # Clean stdout
+                        sys.stdout.write('\n')
+                
+                for file in files:
+                    if glob and not fnmatch(file, glob):
+                        continue
+                    
+                    fullpath = os.path.join(root, file)
+                    key_name = cloud_path + get_key_name(fullpath, path)
+                    file_size = os.path.getsize(fullpath)
+                    
+                    if file_size == 0:
+                        if ignore_empty:
+                            if not quiet:
+                                sys.stdout.write(
+                                    'Skipping %s (empty file)\n' %
+                                    fullpath[len(path):].lstrip(os.sep)
+                                    )
+                            continue
+                    
+                    if key_name in keys:
+                        if no_overwrite:
+                            if not quiet:
+                                sys.stdout.write(
+                                    'Skipping %s (not overwriting)\n' %
+                                    fullpath[len(path):].lstrip(os.sep)
+                                    )
+                            continue
+                        elif keys[key_name] == file_size:
+                            if not quiet:
+                                sys.stdout.write(
+                                    'Skipping %s (size matches)\n' %
+                                    fullpath[len(path):].lstrip(os.sep)
+                                    )
+                            continue
+                    
+                    sys.stdout.write(
+                        '%s\n' %
+                        fullpath[len(path):].lstrip(os.sep)
+                        )
+                    
+                    if not no_op:
+                        # Setup callback
+                        num_cb = int(file_size ** .25)
+                        
+                        # Send the file
+                        k = b.new_key(key_name)
+                        if cloud_service == 'gs':
+                            k.set_contents_from_filename(
+                                fullpath, cb=cb, num_cb=num_cb, policy=grant
+                                )
+                        else:
+                            k.set_contents_from_filename(
+                                fullpath, cb=cb, num_cb=num_cb,
+                                policy=grant, reduced_redundancy=reduced,
+                                encrypt_key=encrypt
+                                )
+                        keys[key_name] = file_size
                         
                         # Clean stdout
                         sys.stdout.write('\n')
