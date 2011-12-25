@@ -279,21 +279,21 @@ def main():
     debug = 0
     
     for o, a in opts:
-        if o == '-a' or o == '--access-key':
+        if o in ('-a', '--access-key'):
             cloud_access_key_id = a
-        elif o == '-s' or o == '--secret-key':
+        elif o in ('-s', '--secret-key'):
             cloud_secret_access_key = a
         elif o == '--endpoint':
             endpoint = a
-        elif o == '-g' or o == '--grant':
+        elif o in ('-g', '--grant'):
             grant = a
-        elif o == '-r' or o == '--reduced':
+        elif o in ('-r', '--reduced'):
             reduced = True
-        elif o == '-e' or o == '--encrypt-keys':
+        elif o in ('-e', '--encrypt-keys'):
             encrypt = True
-        elif o == '-p' or o == '--preserve-acl':
+        elif o in ('-p', '--preserve-acl'):
             preserve = True
-        elif o == '-w' or o == '--no-overwrite':
+        elif o in ('-w', '--no-overwrite'):
             no_overwrite = True
         elif o == '--glob':
             glob = True
@@ -304,13 +304,13 @@ def main():
             ignore_empty = True
         elif o == '--delete':
             delete = True
-        elif o == '-n' or o == '--dry-run':
+        elif o in ('-n', '--dry-run'):
             no_op = True
-        elif o == '-v' or o == '--verbose':
+        elif o in ('-v', '--verbose'):
             quiet = False
-        elif o == '-d' or o == '--debug':
+        elif o in ('-d', '--debug'):
             debug = int(a)
-        elif o == '-h' or o == '--help':
+        elif o in ('-h', '--help'):
             usage()
             sys.exit()
     
