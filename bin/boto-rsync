@@ -132,17 +132,11 @@ def get_full_path(path):
 
 def convert_bytes(n):
     """Converts byte sizes into human readable forms such as KB/MB/etc."""
-    K, M, G, T = 1 << 10, 1 << 20, 1 << 30, 1 << 40
-    if   n >= T:
-        return '%.1fT' % (float(n) / T)
-    elif n >= G:
-        return '%.1fG' % (float(n) / G)
-    elif n >= M:
-        return '%.1fM' % (float(n) / M)
-    elif n >= K:
-        return '%.1fK' % (float(n) / K)
-    else:
-        return '%dB' % n
+    for x in ['b','K','M','G','T']:
+        if n < 1024.0:
+            return "%.1f%s" % (n, x)
+        n /= 1024.0
+    return "%.1f%s" % (n, x)
 
 def spinner(event, every):
     """Animates an ASCII spinner."""
