@@ -479,8 +479,7 @@ def main():
                                         fullpath[len(path):].lstrip(os.sep)
                                         )
                                 continue
-                            elif keys[key_name] == file_size or \
-                                 key_name.endswith('/'):
+                            elif keys[key_name] == file_size:
                                 if not quiet:
                                     sys.stdout.write(
                                         'Skipping %s (size matches)\n' %
@@ -741,8 +740,7 @@ def main():
                                 fullpath.split(os.sep)[-1]
                                 )
                     copy_file = False
-                elif key.size == os.path.getsize(fullpath) or \
-                     key.name.endswith('/'):
+                elif key.size == os.path.getsize(fullpath):
                     if not quiet:
                         if rename:
                             sys.stdout.write(
@@ -786,6 +784,11 @@ def main():
             sys.stdout.write('Scanning for keys to transfer...\n')
             
             for key in b.list(prefix=cloud_path):
+                # Skip the key if it is the cloud path
+                if not key.name[len(cloud_path):] or \
+                   key.name[len(cloud_path):] == '$folder$':
+                    continue
+                
                 if no_recurse and '/' in key.name[len(cloud_path):]:
                     continue
                 
@@ -803,14 +806,13 @@ def main():
                 
                 keys.append(fullpath)
                 
-                if key.size == 0:
-                    if ignore_empty:
-                        if not quiet:
-                            sys.stdout.write(
-                                'Skipping %s (empty key)\n' %
-                                fullpath[len(os.path.join(path, '')):]
-                                )
-                        continue
+                if key.size == 0 and ignore_empty:
+                    if not quiet:
+                        sys.stdout.write(
+                            'Skipping %s (empty key)\n' %
+                            fullpath[len(os.path.join(path, '')):]
+                            )
+                    continue
                 
                 if not os.path.isdir(os.path.split(fullpath)[0]):
                     if not quiet:
