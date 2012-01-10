@@ -1,5 +1,5 @@
 ================================================================================
-boto rsync v0.6
+boto rsync v0.7
 ================================================================================
 
 | Copyright: (c) 2011 Seth Davis
@@ -105,6 +105,9 @@ Options
                                 disabled (typically accomplished by enclosing
                                 SOURCE in quotes, e.g. "/path/*.zip").
     --no-recurse                Do not recurse into directories.
+    --skip-dirkeys              When syncing to S3 or GS, skip the creation of
+                                keys which represent "directories" (an empty
+                                key ending in "/" for S3 or "_$folder$" for GS).
     --ignore-empty              Ignore empty (0-byte) keys/files/directories.
                                 This will skip the transferring of empty
                                 directories and keys/files whose size is 0.
