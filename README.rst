@@ -46,10 +46,10 @@ Usage
 SOURCE and DESTINATION can be:
 
 * A local path to a directory or specific file
-* A custom S3 or GS URI to a directory or specific key in the format of
+* A custom S3 or GS URL to a directory or specific key in the format of
   s3://bucketname/path/or/key
-* A S3 to S3 transfer using two S3 URIs
-* A GS to GS transfer using two GS URIs
+* A S3 to S3 transfer using two S3 URLs
+* A GS to GS transfer using two GS URLs
 
 
 Examples

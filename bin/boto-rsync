@@ -46,9 +46,9 @@ USAGE
     boto-rsync [OPTIONS] SOURCE DESTINATION
     
     SOURCE and DESTINATION can either be a local path to a directory or specific
-    file, a custom S3 or GS URI to a directory or specific key in the format of
-    s3://bucketname/path/or/key, a S3 to S3 transfer using two S3 URIs, or
-    a GS to GS transfer using two GS URIs.
+    file, a custom S3 or GS URL to a directory or specific key in the format of
+    s3://bucketname/path/or/key, a S3 to S3 transfer using two S3 URLs, or
+    a GS to GS transfer using two GS URLs.
 
 EXAMPLES
     boto-rsync [OPTIONS] /local/path/ s3://bucketname/remote/path/
