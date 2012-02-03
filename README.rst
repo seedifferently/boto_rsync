@@ -79,6 +79,9 @@ Options
     -s/--secret-key <secret>    Your Secret Key. If not supplied, boto will look
                                 for an environment variable or a credentials
                                 file.
+    --anon                      Connect without credentials (S3 only). Useful if
+                                working with others' buckets that have a global
+                                read/write ACL.
     --endpoint <host>           Specify a specific S3 endpoint to connect to via
                                 boto's "host" connection argument (S3 only).
     -g/--grant <policy>         A canned ACL policy that will be granted on each

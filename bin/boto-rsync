@@ -64,6 +64,9 @@ OPTIONS
     -s/--secret-key <secret>    Your Secret Key. If not supplied, boto will look
                                 for an environment variable or a credentials
                                 file (see README.rst for more info).
+    --anon                      Connect without credentials (S3 only). Useful if
+                                working with others' buckets that have a global
+                                read/write ACL.
     --endpoint <host>           Specify a specific S3 endpoint to connect to via
                                 boto's "host" connection argument (S3 only).
     -g/--grant <policy>         A canned ACL policy that will be granted on each
@@ -243,7 +246,7 @@ def main():
     try:
         opts, args = getopt.getopt(
                 sys.argv[1:], 'a:s:g:repwnvd:h',
-                ['access-key=', 'secret-key=', 'endpoint=', 'grant=',
+                ['access-key=', 'secret-key=', 'anon', 'endpoint=', 'grant=',
                  'reduced', 'encrypt-keys', 'preserve-acl', 'no-overwrite',
                  'glob', 'no-recurse', 'skip-dirkeys', 'ignore-empty', 'delete',
                  'dry-run', 'verbose', 'debug=', 'help']
@@ -261,6 +264,7 @@ def main():
     
     cloud_access_key_id = None
     cloud_secret_access_key = None
+    anon = False
     endpoint = 's3.amazonaws.com'
     grant = None
     reduced = False
@@ -281,6 +285,8 @@ def main():
             cloud_access_key_id = a
         elif o in ('-s', '--secret-key'):
             cloud_secret_access_key = a
+        elif o == '--anon':
+            anon = True
         elif o == '--endpoint':
             endpoint = a
         elif o in ('-g', '--grant'):
@@ -396,9 +402,12 @@ def main():
         c = boto.connect_gs(gs_access_key_id=cloud_access_key_id,
                             gs_secret_access_key=cloud_secret_access_key)
     else:
-        c = boto.connect_s3(aws_access_key_id=cloud_access_key_id,
-                            aws_secret_access_key=cloud_secret_access_key,
-                            host=endpoint)
+        if anon:
+            c = boto.connect_s3(host=endpoint, anon=True)
+        else:
+            c = boto.connect_s3(aws_access_key_id=cloud_access_key_id,
+                                aws_secret_access_key=cloud_secret_access_key,
+                                host=endpoint)
     c.debug = debug
     b = c.get_bucket(cloud_bucket)
     if xfer_type in ['sync']:
