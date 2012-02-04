@@ -75,6 +75,10 @@ OPTIONS
                                 supported by S3/GS: private, public-read,
                                 public-read-write (S3 only), or
                                 authenticated-read
+    -m/--metadata <metadata>    A comma separated list of "key=value" pairs
+                                specifying what metadata to set on each file
+                                transferred to S3/GS.
+                                e.g. "Content-Type=text/plain,Foo=Bar"
     -r/--reduced                Enable reduced redundancy on files copied to S3.
     -e/--encrypt-keys           Enable server-side encryption on files copied
                                 to S3 (only applies when S3 is the destination).
@@ -245,11 +249,12 @@ def main():
     
     try:
         opts, args = getopt.getopt(
-                sys.argv[1:], 'a:s:g:repwnvd:h',
+                sys.argv[1:], 'a:s:g:m:repwnvd:h',
                 ['access-key=', 'secret-key=', 'anon', 'endpoint=', 'grant=',
-                 'reduced', 'encrypt-keys', 'preserve-acl', 'no-overwrite',
-                 'glob', 'no-recurse', 'skip-dirkeys', 'ignore-empty', 'delete',
-                 'dry-run', 'verbose', 'debug=', 'help']
+                 'metadata=', 'reduced', 'encrypt-keys', 'preserve-acl',
+                 'no-overwrite', 'glob', 'no-recurse', 'skip-dirkeys',
+                 'ignore-empty', 'delete', 'dry-run', 'verbose', 'debug=',
+                 'help']
             )
     except:
         usage()
@@ -267,6 +272,7 @@ def main():
     anon = False
     endpoint = 's3.amazonaws.com'
     grant = None
+    metadata = {}
     reduced = False
     encrypt = False
     preserve = False
@@ -291,6 +297,8 @@ def main():
             endpoint = a
         elif o in ('-g', '--grant'):
             grant = a
+        elif o in ('-m', '--metadata'):
+            metadata.update(dict([meta.split('=') for meta in a.split(',')]))
         elif o in ('-r', '--reduced'):
             reduced = True
         elif o in ('-e', '--encrypt-keys'):
@@ -562,6 +570,7 @@ def main():
                         
                         # Send the file
                         k = b.new_key(key_name)
+                        k.update_metadata(metadata)
                         if cloud_service == 'gs':
                             k.set_contents_from_filename(
                                 fullpath, cb=cb, num_cb=num_cb, policy=grant
@@ -671,6 +680,7 @@ def main():
                     
                     # Send the file
                     k = b.new_key(key_name)
+                    k.update_metadata(metadata)
                     if cloud_service == 'gs':
                         k.set_contents_from_filename(
                             path, cb=cb, num_cb=num_cb, policy=grant
@@ -990,7 +1000,7 @@ def main():
                     try:
                         # Transfer the key
                         key.copy(cloud_dest_bucket, fullpath,
-                                 reduced_redundancy=reduced,
+                                 metadata=metadata, reduced_redundancy=reduced,
                                  preserve_acl=preserve, encrypt_key=encrypt)
                     except Exception, e:
                         raise e
@@ -1084,10 +1094,10 @@ def main():
                     t1 = threading.Thread(target=spinner, args=(ev, 0.25))
                     t1.start()
                     
-                    # Transfer the key
                     try:
+                        # Transfer the key
                         key.copy(cloud_dest_bucket, fullpath,
-                                 reduced_redundancy=reduced,
+                                 metadata=metadata, reduced_redundancy=reduced,
                                  preserve_acl=preserve, encrypt_key=encrypt)
                     except Exception, e:
                         raise e

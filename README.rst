@@ -90,6 +90,10 @@ Options
                                 supported by S3/GS: private, public-read,
                                 public-read-write (S3 only), or
                                 authenticated-read
+    -m/--metadata <metadata>    A comma separated list of "key=value" pairs
+                                specifying what metadata to set on each file
+                                transferred to S3/GS.
+                                e.g. "Content-Type=text/plain,Foo=Bar"
     -r/--reduced                Enable reduced redundancy on files copied to S3.
     -e/--encrypt-keys           Enable server-side encryption on files copied
                                 to S3 (only applies when S3 is the destination).
