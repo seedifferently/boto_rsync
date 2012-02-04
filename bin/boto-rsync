@@ -21,109 +21,36 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 #
-import sys, os, time, datetime, getopt, threading, signal
+import sys, os, time, datetime, argparse, threading, signal
 from fnmatch import fnmatch
 import boto
 
 __version__ = '0.7'
 
-usage_string = """
-boto-rsync v0.7
+version= """
+%(prog)s v%(version)s
 Copyright (c) 2011 Seth Davis
 http://github.com/seedifferently/boto_rsync
+"""
 
-SYNOPSIS
-    boto-rsync is a rough adaptation of boto's s3put script which has been
-    reengineered to more closely mimic rsync. Its goal is to provide a familiar
-    rsync-like wrapper for boto's S3 and Google Storage interfaces.
+description = """
+SOURCE and DESTINATION can either be a local path to a directory or specific
+file, a custom S3 or GS URL to a directory or specific key in the format of
+s3://bucketname/path/or/key, a S3 to S3 transfer using two S3 URLs, or a GS to
+GS transfer using two GS URLs.
 
-    By default, the script works recursively and differences between files are
-    checked by comparing file sizes (e.g. rsync's --recursive and --size-only
-    options). If the file exists on the destination but its size differs from
-    the source, then it will be overwritten (unless the -w option is used).
-
-USAGE
-    boto-rsync [OPTIONS] SOURCE DESTINATION
-    
-    SOURCE and DESTINATION can either be a local path to a directory or specific
-    file, a custom S3 or GS URL to a directory or specific key in the format of
-    s3://bucketname/path/or/key, a S3 to S3 transfer using two S3 URLs, or
-    a GS to GS transfer using two GS URLs.
-
-EXAMPLES
+examples:
     boto-rsync [OPTIONS] /local/path/ s3://bucketname/remote/path/
  or
     boto-rsync [OPTIONS] gs://bucketname/remote/path/or/key /local/path/
  or
     boto-rsync [OPTIONS] s3://bucketname/ s3://another_bucket/
-
-OPTIONS
-    -a/--access-key <key>       Your Access Key ID. If not supplied, boto will
-                                look for an environment variable or a
-                                credentials file (see README.rst for more info).
-    -s/--secret-key <secret>    Your Secret Key. If not supplied, boto will look
-                                for an environment variable or a credentials
-                                file (see README.rst for more info).
-    --anon                      Connect without credentials (S3 only). Useful if
-                                working with others' buckets that have a global
-                                read/write ACL.
-    --endpoint <host>           Specify a specific S3 endpoint to connect to via
-                                boto's "host" connection argument (S3 only).
-    -g/--grant <policy>         A canned ACL policy that will be granted on each
-                                file transferred to S3/GS. The value provided
-                                must be one of the "canned" ACL policies
-                                supported by S3/GS: private, public-read,
-                                public-read-write (S3 only), or
-                                authenticated-read
-    -m/--metadata <metadata>    A comma separated list of "key=value" pairs
-                                specifying what metadata to set on each file
-                                transferred to S3/GS.
-                                e.g. "Content-Type=text/plain,Foo=Bar"
-    -r/--reduced                Enable reduced redundancy on files copied to S3.
-    -e/--encrypt-keys           Enable server-side encryption on files copied
-                                to S3 (only applies when S3 is the destination).
-    -p/--preserve-acl           Copy the ACL from the source key to the
-                                destination key (only applies in S3/S3 and GS/GS
-                                transfer modes).
-    -w/--no-overwrite           No files will be overwritten, if the file/key
-                                exists on the destination it will be kept. Note
-                                that this is not a sync--even if the file has
-                                been updated on the source it will not be
-                                updated on the destination.
-    --glob                      Interpret the tail end of SOURCE as a filename
-                                pattern and filter transfers accordingly.
-                                Note: If globbing a local path, make sure that
-                                your CLI's automatic filename expansion is
-                                disabled (typically accomplished by enclosing
-                                SOURCE in quotes, e.g. "/path/*.zip").
-    --no-recurse                Do not recurse into directories.
-    --skip-dirkeys              When syncing to S3 or GS, skip the creation of
-                                keys which represent "directories" (an empty
-                                key ending in "/" for S3 or "_$folder$" for GS).
-    --ignore-empty              Ignore empty (0-byte) keys/files/directories.
-                                This will skip the transferring of empty
-                                directories and keys/files whose size is 0.
-                                Warning: S3/GS often uses empty keys with
-                                special trailing characters to specify
-                                directories.
-    --delete                    Delete extraneous files from destination dirs
-                                after the transfer has finished (e.g. rsync's
-                                --delete-after).
-    -n/--dry-run                No files will be transferred, but informational
-                                messages will be printed about what would have
-                                happened.
-    -v/--verbose                Print additional informational messages.
-    -d/--debug <level>          Level 0 means no debug output (default), 1 means
-                                normal debug output from boto, and 2 means boto
-                                debug output plus request/response output from
-                                httplib.
-
 """
-def usage():
+
+def usage(parser):
     """Prints the usage string and exits."""
-    sys.stdout.write(usage_string)
-    
-    sys.exit()
+    parser.print_help()
+    sys.exit(2)
 
 def get_full_path(path):
     """
@@ -247,18 +174,6 @@ def signal_handler(signum, frame):
 def main():
     global speeds, ev
     
-    try:
-        opts, args = getopt.getopt(
-                sys.argv[1:], 'a:s:g:m:repwnvd:h',
-                ['access-key=', 'secret-key=', 'anon', 'endpoint=', 'grant=',
-                 'metadata=', 'reduced', 'encrypt-keys', 'preserve-acl',
-                 'no-overwrite', 'glob', 'no-recurse', 'skip-dirkeys',
-                 'ignore-empty', 'delete', 'dry-run', 'verbose', 'debug=',
-                 'help']
-            )
-    except:
-        usage()
-    
     signal.signal(signal.SIGINT, signal_handler)
     ev = None
     speeds = []
@@ -267,121 +182,207 @@ def main():
     rename = False
     copy_file = True
     
-    cloud_access_key_id = None
-    cloud_secret_access_key = None
-    anon = False
-    endpoint = 's3.amazonaws.com'
-    grant = None
-    metadata = {}
-    reduced = False
-    encrypt = False
-    preserve = False
-    no_overwrite = False
-    glob = False
-    no_recurse = False
-    skip_dirkeys = False
-    ignore_empty = False
-    delete = False
-    no_op = False
-    quiet = True
-    debug = 0
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        usage='%(prog)s [OPTIONS] SOURCE DESTINATION',
+        description=description,
+        add_help=False
+        )
+    parser.add_argument(
+        '-a', '--access-key', metavar='KEY', dest='cloud_access_key_id',
+        help='Your Access Key ID. If not supplied, boto will look for an ' + \
+             'environment variable or a credentials file (see README.rst ' + \
+             'for more info).'
+        )
+    parser.add_argument(
+        '-s', '--secret-key', metavar='SECRET', dest='cloud_secret_access_key',
+        help='Your Secret Key. If not supplied, boto will look for an ' + \
+             'environment variable or a credentials file.'
+        )
+    parser.add_argument(
+        '--anon', action='store_true',
+        help='Connect without credentials (S3 only). Useful if working ' + \
+             'with others\' buckets that have a global read/write ACL.'
+        )
+    parser.add_argument(
+        '--endpoint', metavar='HOST', default='s3.amazonaws.com',
+        help='Specify a specific S3 endpoint to connect to via boto\'s ' + \
+             '"host" connection argument (S3 only).'
+        )
+    parser.add_argument(
+        '-g', '--grant',
+        help='A canned ACL policy that will be granted on each file ' + \
+             'transferred to S3/GS. The value provided must be one of the ' + \
+             '"canned" ACL policies supported by S3/GS: private, ' + \
+             'public-read, public-read-write (S3 only), or authenticated-read'
+        )
+    parser.add_argument(
+        '-m', '--metadata', nargs='+', default=dict(),
+        help='One or more "Name: value" pairs specifying what metadata to ' + \
+             'set on each file transferred to S3/GS. Note: Be sure to end ' + \
+             'your args with "--" if this is the last argument specified ' + \
+             'so that SOURCE and DESTINATION can be read properly. e.g. ' + \
+             '%(prog)s -m "Content-Type: audio/mpeg" "Content-Disposition: ' + \
+             'attachment" -- ./path/ s3://bucket/'
+        )
+    parser.add_argument(
+        '-r', '--reduced', action='store_true',
+        help='Enable reduced redundancy on files copied to S3.'
+        )
+    parser.add_argument(
+        '-e', '--encrypt-keys', dest='encrypt', action='store_true',
+        help='Enable server-side encryption on files copied to S3 (only ' + \
+             'applies when S3 is the destination).'
+        )
+    parser.add_argument(
+        '-p', '--preserve-acl', dest='preserve', action='store_true',
+        help='Copy the ACL from the source key to the destination key ' + \
+             '(only applies in S3/S3 and GS/GS transfer modes).'
+        )
+    parser.add_argument(
+        '-w', '--no-overwrite', action='store_true',
+        help='No files will be overwritten, if the file/key exists on the ' + \
+             'destination it will be kept. Note that this is not a sync--' + \
+             'even if the file has been updated on the source it will not ' + \
+             'be updated on the destination.'
+        )
+    parser.add_argument(
+        '--glob', action='store_true',
+        help='Interpret the tail end of SOURCE as a filename pattern and ' + \
+             'filter transfers accordingly. Note: If globbing a local ' + \
+             'path, make sure that your CLI\'s automatic filename ' + \
+             'expansion is disabled (typically accomplished by enclosing ' + \
+             'SOURCE in quotes, e.g. "/path/*.zip").'
+        )
+    parser.add_argument(
+        '--no-recurse', action='store_true',
+        help='Do not recurse into directories.'
+        )
+    parser.add_argument(
+        '--skip-dirkeys', action='store_true',
+        help='When syncing to S3 or GS, skip the creation of keys which ' + \
+             'represent "directories" (an empty key ending in "/" for S3 ' + \
+             'or "_$folder$" for GS).'
+        )
+    parser.add_argument(
+        '--ignore-empty', action='store_true',
+        help='Ignore empty (0-byte) keys/files/directories. This will skip ' + \
+             'the transferring of empty directories and keys/files whose ' + \
+             'size is 0. Warning: S3/GS often uses empty keys with special ' + \
+             'trailing characters to specify directories.'
+        )
+    parser.add_argument(
+        '--delete', action='store_true',
+        help='Delete extraneous files from destination dirs after the ' + \
+             'transfer has finished (e.g. rsync\'s --delete-after).'
+        )
+    parser.add_argument(
+        '-n', '--dry-run', action='store_true', dest='no_op',
+        help='No files will be transferred, but informational messages ' + \
+             'will be printed about what would have happened.'
+        )
+    parser.add_argument(
+        '-v', '--verbose', action='store_false', dest='quiet',
+        help='Print additional informational messages.'
+        )
+    parser.add_argument(
+        '-d', '--debug', metavar='LEVEL', choices=[0, 1, 2], default=0,
+        type=int,
+        help='Level 0 means no debug output (default), 1 means normal ' + \
+             'debug output from boto, and 2 means boto debug output plus ' + \
+             'request/response output from httplib.'
+        )
+    parser.add_argument(
+        '--version', action='version',
+        version=version % dict(prog=parser.prog, version=__version__)
+        )
+    parser.add_argument(
+        '-h', '--help', action='help',
+        help='show this help message and exit'
+        )
+    parser.add_argument('SOURCE', help=argparse.SUPPRESS)
+    parser.add_argument('DESTINATION', help=argparse.SUPPRESS)
     
-    for o, a in opts:
-        if o in ('-a', '--access-key'):
-            cloud_access_key_id = a
-        elif o in ('-s', '--secret-key'):
-            cloud_secret_access_key = a
-        elif o == '--anon':
-            anon = True
-        elif o == '--endpoint':
-            endpoint = a
-        elif o in ('-g', '--grant'):
-            grant = a
-        elif o in ('-m', '--metadata'):
-            metadata.update(dict([meta.split('=') for meta in a.split(',')]))
-        elif o in ('-r', '--reduced'):
-            reduced = True
-        elif o in ('-e', '--encrypt-keys'):
-            encrypt = True
-        elif o in ('-p', '--preserve-acl'):
-            preserve = True
-        elif o in ('-w', '--no-overwrite'):
-            no_overwrite = True
-        elif o == '--glob':
-            glob = True
-            no_recurse = True
-        elif o == '--no-recurse':
-            no_recurse = True
-        elif o == '--skip-dirkeys':
-            skip_dirkeys = True
-        elif o == '--ignore-empty':
-            ignore_empty = True
-        elif o == '--delete':
-            delete = True
-        elif o in ('-n', '--dry-run'):
-            no_op = True
-        elif o in ('-v', '--verbose'):
-            quiet = False
-        elif o in ('-d', '--debug'):
-            debug = int(a)
-        elif o in ('-h', '--help'):
-            usage()
-            sys.exit()
+    args = parser.parse_args()
     
-    if len(args) != 2:
-        usage()
+    try:
+        cloud_access_key_id = args.cloud_access_key_id
+        cloud_secret_access_key = args.cloud_secret_access_key
+        anon = args.anon
+        endpoint = args.endpoint
+        grant = args.grant
+        metadata = args.metadata
+        if not isinstance(metadata, dict):
+            metadata = dict([meta.split(': ', 1) for meta in metadata])
+        reduced = args.reduced
+        encrypt = args.encrypt
+        preserve = args.preserve
+        no_overwrite = args.no_overwrite
+        glob = args.glob
+        no_recurse = args.no_recurse
+        skip_dirkeys = args.skip_dirkeys
+        ignore_empty = args.ignore_empty
+        delete = args.delete
+        no_op = args.no_op
+        quiet = args.quiet
+        debug = args.debug
+        source = args.SOURCE
+        dest = args.DESTINATION
+    except:
+        sys.stdout.write('\nERROR: Improperly formatted arguments.\n\n')
+        usage(parser)
     
-    if (args[0].startswith('s3://') and args[1].startswith('gs://') or
-        args[0].startswith('gs://') and args[1].startswith('s3://')):
+    if (source.startswith('s3://') and dest.startswith('gs://') or
+        source.startswith('gs://') and dest.startswith('s3://')):
         sys.stderr.write('ERROR: You cannot directly sync between S3 and ' +
-                         'Google Storage.\n')
-        usage()
-    elif not args[0].startswith('s3://') and args[1].startswith('s3://'):
+                         'Google Storage.\n\n')
+        usage(parser)
+    elif not source.startswith('s3://') and dest.startswith('s3://'):
         # S3 upload sync
         cloud_service = 's3'
-        path = get_full_path(args[0])
-        cloud_bucket = args[1][5:].split('/')[0]
-        cloud_path = args[1][(len(cloud_bucket) + 5):]
+        path = get_full_path(source)
+        cloud_bucket = dest[5:].split('/')[0]
+        cloud_path = dest[(len(cloud_bucket) + 5):]
         xfer_type = 'upload'
-    elif args[0].startswith('s3://') and not args[1].startswith('s3://'):
+    elif source.startswith('s3://') and not dest.startswith('s3://'):
         # S3 download sync
         cloud_service = 's3'
-        cloud_bucket = args[0][5:].split('/')[0]
-        cloud_path = args[0][(len(cloud_bucket) + 5):]
-        path = get_full_path(args[1])
+        cloud_bucket = source[5:].split('/')[0]
+        cloud_path = source[(len(cloud_bucket) + 5):]
+        path = get_full_path(dest)
         xfer_type = 'download'
-    elif not args[0].startswith('gs://') and args[1].startswith('gs://'):
+    elif not source.startswith('gs://') and dest.startswith('gs://'):
         # GS upload sync
         cloud_service = 'gs'
-        path = get_full_path(args[0])
-        cloud_bucket = args[1][5:].split('/')[0]
-        cloud_path = args[1][(len(cloud_bucket) + 5):]
+        path = get_full_path(source)
+        cloud_bucket = dest[5:].split('/')[0]
+        cloud_path = dest[(len(cloud_bucket) + 5):]
         xfer_type = 'upload'
-    elif args[0].startswith('gs://') and not args[1].startswith('gs://'):
+    elif source.startswith('gs://') and not dest.startswith('gs://'):
         # GS download sync
         cloud_service = 'gs'
-        cloud_bucket = args[0][5:].split('/')[0]
-        cloud_path = args[0][(len(cloud_bucket) + 5):]
-        path = get_full_path(args[1])
+        cloud_bucket = source[5:].split('/')[0]
+        cloud_path = source[(len(cloud_bucket) + 5):]
+        path = get_full_path(dest)
         xfer_type = 'download'
-    elif args[0].startswith('s3://') and args[1].startswith('s3://'):
+    elif source.startswith('s3://') and dest.startswith('s3://'):
         # S3 to S3 sync
         cloud_service = 's3'
-        cloud_bucket = args[0][5:].split('/')[0]
-        cloud_path = args[0][(len(cloud_bucket) + 5):]
-        cloud_dest_bucket = args[1][5:].split('/')[0]
-        cloud_dest_path = args[1][(len(cloud_dest_bucket) + 5):]
+        cloud_bucket = source[5:].split('/')[0]
+        cloud_path = source[(len(cloud_bucket) + 5):]
+        cloud_dest_bucket = dest[5:].split('/')[0]
+        cloud_dest_path = dest[(len(cloud_dest_bucket) + 5):]
         xfer_type = 'sync'
-    elif args[0].startswith('gs://') and args[1].startswith('gs://'):
+    elif source.startswith('gs://') and dest.startswith('gs://'):
         # GS to GS sync
         cloud_service = 'gs'
-        cloud_bucket = args[0][5:].split('/')[0]
-        cloud_path = args[0][(len(cloud_bucket) + 5):]
-        cloud_dest_bucket = args[1][5:].split('/')[0]
-        cloud_dest_path = args[1][(len(cloud_dest_bucket) + 5):]
+        cloud_bucket = source[5:].split('/')[0]
+        cloud_path = source[(len(cloud_bucket) + 5):]
+        cloud_dest_bucket = dest[5:].split('/')[0]
+        cloud_dest_path = dest[(len(cloud_dest_bucket) + 5):]
         xfer_type = 'sync'
     else:
-        usage()
+        usage(parser)
     
     # Cloud paths shouldn't have a leading slash
     cloud_path = cloud_path.lstrip('/')
@@ -389,17 +390,17 @@ def main():
     if xfer_type in ['download', 'upload']:
         if not os.path.isdir(path) and not os.path.split(path)[0]:
             sys.stdout.write(
-                '\nERROR: %s is not a valid path (does it exist?)\n' % path
+                '\nERROR: %s is not a valid path (does it exist?)\n\n' % path
                 )
-            usage()
+            usage(parser)
         elif not cloud_bucket or len(cloud_bucket) < 3:
-            sys.stdout.write('\nERROR: Bucket name is invalid\n')
-            usage()
+            sys.stdout.write('\nERROR: Bucket name is invalid\n\n')
+            usage(parser)
     elif xfer_type in ['sync']:
         if not cloud_bucket or len(cloud_bucket) < 3 and \
            not cloud_dest_bucket or len(cloud_dest_bucket) < 3:
-            sys.stdout.write('\nERROR: Bucket name is invalid\n')
-            usage()
+            sys.stdout.write('\nERROR: Bucket name is invalid\n\n')
+            usage(parser)
         
         # Cloud paths shouldn't have a leading slash
         cloud_dest_path = cloud_dest_path.lstrip('/')

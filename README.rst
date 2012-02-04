@@ -73,65 +73,67 @@ Options
 
 ::
 
-    -a/--access-key <key>       Your Access Key ID. If not supplied, boto will
-                                look for an environment variable or a
-                                credentials file.
-    -s/--secret-key <secret>    Your Secret Key. If not supplied, boto will look
-                                for an environment variable or a credentials
-                                file.
-    --anon                      Connect without credentials (S3 only). Useful if
-                                working with others' buckets that have a global
-                                read/write ACL.
-    --endpoint <host>           Specify a specific S3 endpoint to connect to via
-                                boto's "host" connection argument (S3 only).
-    -g/--grant <policy>         A canned ACL policy that will be granted on each
-                                file transferred to S3/GS. The value provided
-                                must be one of the "canned" ACL policies
-                                supported by S3/GS: private, public-read,
-                                public-read-write (S3 only), or
-                                authenticated-read
-    -m/--metadata <metadata>    A comma separated list of "key=value" pairs
-                                specifying what metadata to set on each file
-                                transferred to S3/GS.
-                                e.g. "Content-Type=text/plain,Foo=Bar"
-    -r/--reduced                Enable reduced redundancy on files copied to S3.
-    -e/--encrypt-keys           Enable server-side encryption on files copied
-                                to S3 (only applies when S3 is the destination).
-    -p/--preserve-acl           Copy the ACL from the source key to the
-                                destination key (only applies in S3/S3 and GS/GS
-                                transfer modes).
-    -w/--no-overwrite           No files will be overwritten, if the file/key
-                                exists on the destination it will be kept. Note
-                                that this is not a sync--even if the file has
-                                been updated on the source it will not be
-                                updated on the destination.
-    --glob                      Interpret the tail end of SOURCE as a filename
-                                pattern and filter transfers accordingly.
-                                Note: If globbing a local path, make sure that
-                                your CLI's automatic filename expansion is
-                                disabled (typically accomplished by enclosing
-                                SOURCE in quotes, e.g. "/path/*.zip").
-    --no-recurse                Do not recurse into directories.
-    --skip-dirkeys              When syncing to S3 or GS, skip the creation of
-                                keys which represent "directories" (an empty
-                                key ending in "/" for S3 or "_$folder$" for GS).
-    --ignore-empty              Ignore empty (0-byte) keys/files/directories.
-                                This will skip the transferring of empty
-                                directories and keys/files whose size is 0.
-                                Warning: S3/GS often uses empty keys with
-                                special trailing characters to specify
-                                directories.
-    --delete                    Delete extraneous files from destination dirs
-                                after the transfer has finished (e.g. rsync's
-                                --delete-after).
-    -n/--dry-run                No files will be transferred, but informational
-                                messages will be printed about what would have
-                                happened.
-    -v/--verbose                Print additional informational messages.
-    -d/--debug <level>          Level 0 means no debug output (default), 1 means
-                                normal debug output from boto, and 2 means boto
-                                debug output plus request/response output from
-                                httplib.
+  -a KEY, --access-key KEY
+                        Your Access Key ID. If not supplied, boto will look
+                        for an environment variable or a credentials file.
+  -s SECRET, --secret-key SECRET
+                        Your Secret Key. If not supplied, boto will look for
+                        an environment variable or a credentials file.
+  --anon                Connect without credentials (S3 only). Useful if
+                        working with others' buckets that have a global
+                        read/write ACL.
+  --endpoint HOST       Specify a specific S3 endpoint to connect to via
+                        boto's "host" connection argument (S3 only).
+  -g GRANT, --grant GRANT
+                        A canned ACL policy that will be granted on each file
+                        transferred to S3/GS. The value provided must be one
+                        of the "canned" ACL policies supported by S3/GS:
+                        private, public-read, public-read-write (S3 only), or
+                        authenticated-read
+  -m METADATA [METADATA ...], --metadata METADATA [METADATA ...]
+                        One or more "Name: value" pairs specifying what
+                        metadata to set on each file transferred to S3/GS.
+                        Note: Be sure to end your args with "--" if this is
+                        the last argument specified so that SOURCE and
+                        DESTINATION can be read properly. e.g. boto-rsync -m
+                        "Content-Type: audio/mpeg" "Content-Disposition:
+                        attachment" -- ./path/ s3://bucket/
+  -r, --reduced         Enable reduced redundancy on files copied to S3.
+  -e, --encrypt-keys    Enable server-side encryption on files copied to S3
+                        (only applies when S3 is the destination).
+  -p, --preserve-acl    Copy the ACL from the source key to the destination
+                        key (only applies in S3/S3 and GS/GS transfer modes).
+  -w, --no-overwrite    No files will be overwritten, if the file/key exists
+                        on the destination it will be kept. Note that this is
+                        not a sync--even if the file has been updated on the
+                        source it will not be updated on the destination.
+  --glob                Interpret the tail end of SOURCE as a filename pattern
+                        and filter transfers accordingly. Note: If globbing a
+                        local path, make sure that your CLI's automatic
+                        filename expansion is disabled (typically accomplished
+                        by enclosing SOURCE in quotes, e.g. "/path/*.zip").
+  --no-recurse          Do not recurse into directories.
+  --skip-dirkeys        When syncing to S3 or GS, skip the creation of keys
+                        which represent "directories" (an empty key ending in
+                        "/" for S3 or "_$folder$" for GS).
+  --ignore-empty        Ignore empty (0-byte) keys/files/directories. This
+                        will skip the transferring of empty directories and
+                        keys/files whose size is 0. Warning: S3/GS often uses
+                        empty keys with special trailing characters to specify
+                        directories.
+  --delete              Delete extraneous files from destination dirs after
+                        the transfer has finished (e.g. rsync's --delete-
+                        after).
+  -n, --dry-run         No files will be transferred, but informational
+                        messages will be printed about what would have
+                        happened.
+  -v, --verbose         Print additional informational messages.
+  -d LEVEL, --debug LEVEL
+                        Level 0 means no debug output (default), 1 means
+                        normal debug output from boto, and 2 means boto debug
+                        output plus request/response output from httplib.
+  --version             show program's version number and exit
+  -h, --help            show the help message and exit
 
 
 Advanced Configuration Options

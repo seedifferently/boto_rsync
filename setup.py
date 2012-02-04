@@ -4,10 +4,13 @@ try:
 except ImportError:
     from setuptools import setup
 
+install_requires = ['boto>=2.2.1']
 
 if sys.version_info[0] >= 3 or sys.version_info[:2] < (2, 5):
     raise RuntimeError('Requires Python 2.5 or above and does not support ' + \
                        'Python 3')
+elif sys.version_info[:2] < (2, 7):
+    install_requires.append('argparse')
 
 here = os.path.abspath(os.path.dirname(__file__))
 try:
@@ -31,7 +34,7 @@ setup(
     url='http://github.com/seedifferently/boto_rsync',
     keywords='boto amazon aws s3 gs google storage cloud sync rsync',
     packages=[],
-    install_requires=['boto>=2.2.1'],
+    install_requires=install_requires,
     scripts=['bin/boto-rsync'],
     license = "MIT",
     platforms = "Posix; MacOS X; Windows",
