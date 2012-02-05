@@ -25,7 +25,7 @@ except IOError:
 
 setup(
     name='boto_rsync',
-    version='0.7',
+    version='0.8',
     author='Seth Davis',
     author_email='seth@curiasolutions.com',
     description="An rsync-like wrapper for boto's S3 and Google Storage " + \
