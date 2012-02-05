@@ -319,7 +319,7 @@ def main():
         preserve = args.preserve
         no_overwrite = args.no_overwrite
         glob = args.glob
-        no_recurse = args.no_recurse
+        no_recurse = args.no_recurse or glob
         skip_dirkeys = args.skip_dirkeys
         ignore_empty = args.ignore_empty
         delete = args.delete
