@@ -303,7 +303,11 @@ def main():
     parser.add_argument('SOURCE', help=argparse.SUPPRESS)
     parser.add_argument('DESTINATION', help=argparse.SUPPRESS)
     
-    args = parser.parse_args()
+    try:
+        args = parser.parse_args()
+    except:
+        sys.stdout.write('\n')
+        usage(parser)
     
     try:
         cloud_access_key_id = args.cloud_access_key_id
@@ -334,7 +338,7 @@ def main():
     
     if (source.startswith('s3://') and dest.startswith('gs://') or
         source.startswith('gs://') and dest.startswith('s3://')):
-        sys.stderr.write('ERROR: You cannot directly sync between S3 and ' +
+        sys.stdout.write('ERROR: You cannot directly sync between S3 and ' +
                          'Google Storage.\n\n')
         usage(parser)
     elif not source.startswith('s3://') and dest.startswith('s3://'):
