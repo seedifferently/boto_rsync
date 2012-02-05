@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) 2011 Seth Davis http://www.curiasolutions.com/
+# Copyright (c) 2012 Seth Davis http://www.curiasolutions.com/
 # s3put is Copyright (c) 2006,2007,2008 Mitch Garnaat http://garnaat.org/
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
@@ -29,7 +29,7 @@ __version__ = '0.7'
 
 version= """
 %(prog)s v%(version)s
-Copyright (c) 2011 Seth Davis
+Copyright (c) 2012 Seth Davis
 http://github.com/seedifferently/boto_rsync
 """
 

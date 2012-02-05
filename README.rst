@@ -2,7 +2,7 @@
 boto rsync v0.7
 ================================================================================
 
-| Copyright: (c) 2011 Seth Davis
+| Copyright: (c) 2012 Seth Davis
 | http://github.com/seedifferently/boto_rsync
 
 
