@@ -159,9 +159,6 @@ Known Issues and Limitations
   on some systems. See the "--glob" option's help text for more info.
 * At this time, the script does not take advantage of boto's "multipart"
   transfer methods. (pull requests welcome!)
-* The release version of boto as of this writing (2.1.1) seems to be buggy when
-  attempting to perform GS to GS transfers. Use the latest boto github source
-  if you need this functionality.
 
 
 Disclaimers and Warnings
