@@ -145,7 +145,7 @@ GS_ACCESS_KEY_ID/GS_SECRET_ACCESS_KEY environment variables or use boto's
 advanced configuration options to set up a credentials file.
 
 More information on boto's advanced configuration options can be found here:
-http://code.google.com/p/boto/wiki/BotoConfig
+http://boto.cloudhackers.com/en/latest/boto_config_tut.html
 
 
 Known Issues and Limitations
