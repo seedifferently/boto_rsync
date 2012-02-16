@@ -305,9 +305,8 @@ def main():
     
     try:
         args = parser.parse_args()
-    except:
-        sys.stdout.write('\n')
-        usage(parser)
+    except argparse.ArgumentTypeError:
+        pass
     
     try:
         cloud_access_key_id = args.cloud_access_key_id
