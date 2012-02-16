@@ -477,6 +477,8 @@ def main():
                 
                 # Create "subdirectories"
                 if root != path and not skip_dirkeys:
+                    create_dirkey = True
+                    
                     if cloud_service == 'gs':
                         key_name = cloud_path + get_key_name(root, path) + \
                                    '_$folder$'
@@ -489,7 +491,7 @@ def main():
                                 'Skipping %s (empty directory)\n' %
                                 key_name.replace('_$folder$', '/')
                                 )
-                        continue
+                        create_dirkey = False
                     elif key_name in keys:
                         if no_overwrite:
                             if not quiet:
@@ -497,7 +499,7 @@ def main():
                                     'Skipping %s (not overwriting)\n' %
                                     key_name.replace('_$folder$', '/')
                                     )
-                            continue
+                            create_dirkey = False
                         elif key_name.endswith('/') or \
                              key_name.endswith('_$folder$'):
                             if not quiet:
@@ -505,31 +507,33 @@ def main():
                                     'Skipping %s (size matches)\n' %
                                     key_name.replace('_$folder$', '/')
                                     )
-                            continue
+                            create_dirkey = False
                     
-                    sys.stdout.write(
-                        '%s\n' %
-                        os.path.join(root[len(path):], '').lstrip(os.sep)
-                        )
-                    if not no_op:
-                        # Setup callback
-                        num_cb = 1
-                        
-                        # Send the directory
-                        k = b.new_key(key_name)
-                        if cloud_service == 'gs':
-                            k.set_contents_from_string(
-                                '', cb=cb, num_cb=num_cb, policy=grant
-                                )
-                        else:
-                            k.set_contents_from_string(
-                                '', cb=cb, num_cb=num_cb, policy=grant,
-                                reduced_redundancy=reduced, encrypt_key=encrypt
-                                )
-                        keys[key_name] = 0
-                        
-                        # Clean stdout
-                        sys.stdout.write('\n')
+                    if create_dirkey:
+                        sys.stdout.write(
+                            '%s\n' %
+                            os.path.join(root[len(path):], '').lstrip(os.sep)
+                            )
+                        if not no_op:
+                            # Setup callback
+                            num_cb = 1
+                            
+                            # Send the directory
+                            k = b.new_key(key_name)
+                            if cloud_service == 'gs':
+                                k.set_contents_from_string(
+                                    '', cb=cb, num_cb=num_cb, policy=grant
+                                    )
+                            else:
+                                k.set_contents_from_string(
+                                    '', cb=cb, num_cb=num_cb, policy=grant,
+                                    reduced_redundancy=reduced,
+                                    encrypt_key=encrypt
+                                    )
+                            keys[key_name] = 0
+                            
+                            # Clean stdout
+                            sys.stdout.write('\n')
                 
                 for file in files:
                     if glob and not fnmatch(file, glob):
