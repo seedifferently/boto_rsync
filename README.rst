@@ -1,5 +1,5 @@
 ================================================================================
-boto rsync v0.8
+boto rsync v0.8.1
 ================================================================================
 
 | Copyright: (c) 2012 Seth Davis
@@ -132,7 +132,6 @@ Options
                         Level 0 means no debug output (default), 1 means
                         normal debug output from boto, and 2 means boto debug
                         output plus request/response output from httplib.
-  --version             show program's version number and exit
   -h, --help            show the help message and exit
 
 

@@ -2,6 +2,13 @@ Latest Changes
 ================================================================================
 
 
+v0.8.1 -- 02/15/2012
+--------------------------------------------------------------------------------
+
+* Fixed an issue where the contents of local directories didn't get copied into
+  remote directories if the remote directory existed and was empty.
+
+
 v0.8 -- 02/05/2012
 --------------------------------------------------------------------------------
 
